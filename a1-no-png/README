@@ -1,0 +1,22 @@
+This version of the code doesn't have PNG file writing capabiltity
+so the  -o command, won't function
+
+The following command line options are available:
+
+-i [number of maxmimum iterations to compute the Mandelbrot set. Default value: 200] 
+-t [number of threads used to compute the Mandelbrot set] 
+-x [number of points to compute in the real dimension. Default value: 1024] 
+-y [number of points to compute in the imaginary dimension Default value: 1024] 
+-b [minimum extent of the real dimension. Default value: -2.5] [maximum extent of the real dimension. Default value: 1] [minimum extent of the imaginary dimension. Default value: -1] [maximum extent of the imaginary dimension. Default value: 1] 
+-c [chunk size] 
+For example,
+
+./mdb -i 500 -t 8 -x 512 -y 512 -b -2.0 0.8 -0.5 0.5 -c 2000 
+ 
+would compute the Mandelbrot set with 8 threads and a maximum of 500 iterations, the computation grid being 512 x 512, the real dimension ranging from -2.0 to 0.8, the imaginary dimension ranging from -0.5 to 0.5; -c specifies that cyclic partitioning is used with a chunk size of 2000.
+
+If (-c) is not specified, BLOCK partitioning is used. There are several more options: (-s) specifies that the provided serial computation would be run instead of the parallel version. (-p) would plot the results without saving to a file. (-v) would compare the results of the parallel version with the serial version, and so you can use this option to verify the correctness of your code. For example,
+
+./mdb -s -p
+
+would run the provided serial version and plot the results.
