@@ -76,7 +76,6 @@ int main(int argc, char* argv[])
 	//////////////////////////////////////////////////////////////////////
 	t2 = getTime();
 	pTime += t2 - t1;
-	
 	ofstream logfile("log");
 	ReportMdb(logfile, runSerial, numThreads, chunkSize, verify, image, imgX, imgY, pTime);
 	
