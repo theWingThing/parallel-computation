@@ -44,7 +44,11 @@ mdb:		$(OBJ)
 clean:
 	$(RM) *.o mdb;
 	$(RM) core;
+	$(RM) cscope.*
+	$(RM) tags
 
 cleanall:
 	$(RM) *.o mdb *.png *.rgb log;
 	$(RM) core;
+	$(RM) cscope.*
+	$(RM) tags

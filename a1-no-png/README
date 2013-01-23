@@ -13,9 +13,17 @@ For example,
 
 ./mdb -i 500 -t 8 -x 512 -y 512 -b -2.0 0.8 -0.5 0.5 -c 2000 
  
-would compute the Mandelbrot set with 8 threads and a maximum of 500 iterations, the computation grid being 512 x 512, the real dimension ranging from -2.0 to 0.8, the imaginary dimension ranging from -0.5 to 0.5; -c specifies that cyclic partitioning is used with a chunk size of 2000.
+would compute the Mandelbrot set with 8 threads and 
+a maximum of 500 iterations, the computation grid being 512 x 512, 
+the real dimension ranging from -2.0 to 0.8, the imaginary dimension ranging from -0.5 to 0.5; 
+-c specifies that cyclic partitioning is used with a chunk size of 2000.
 
-If (-c) is not specified, BLOCK partitioning is used. There are several more options: (-s) specifies that the provided serial computation would be run instead of the parallel version. (-p) would plot the results without saving to a file. (-v) would compare the results of the parallel version with the serial version, and so you can use this option to verify the correctness of your code. For example,
+If (-c) is not specified, BLOCK partitioning is used. 
+There are several more options: (-s) specifies that the provided serial computation would be run 
+instead of the parallel version. 
+(-p) would plot the results without saving to a file. 
+(-v) would compare the results of the parallel version with the serial version, 
+and so you can use this option to verify the correctness of your code. For example,
 
 ./mdb -s -p
 
