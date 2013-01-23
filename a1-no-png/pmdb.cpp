@@ -79,13 +79,20 @@ void Mandelbrot_pthreads(int** pts, int dimX, int dimY, int numThreads, int chun
     // each gets one
     // threads more than 4 do not receive anywork
     
+    for(int k = 0; k < nThreads; k++){
+        args[k].start_x = 0;
+        args[k].start_y = k/nThreads;
+        args[k].width = dimX;
+        args[k].height = (k+1)/nThreads;
+    }
+/*
     switch(nThreads)
     {
         case 1:
             args[0].start_x = 0;
             args[0].start_y = 0;
             args[0].width   = dimX; 
-            args[0].height  = dimY;; 
+            args[0].height  = dimY; 
             break;
         case 2:
             args[0].start_x = 0;
@@ -114,8 +121,7 @@ void Mandelbrot_pthreads(int** pts, int dimX, int dimY, int numThreads, int chun
             args[2].width   = dimX; 
             args[2].height  = dimY/2; 
             break;
-        case 4: case 5: case 6: 
-        case 7: case 8:
+        default:
             args[0].start_x = 0;
             args[0].start_y = 0;
             args[0].width   = dimX; 
@@ -137,7 +143,7 @@ void Mandelbrot_pthreads(int** pts, int dimX, int dimY, int numThreads, int chun
             args[3].height  = dimY / 4; 
             break;    
     }
-
+*/
     for(int t = 0; t < nThreads; t++)
     {
         args[t].tid = t; 
