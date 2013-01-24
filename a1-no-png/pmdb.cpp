@@ -34,19 +34,17 @@ int ComputeMandelbrotPoint(int x, int y, int dimX, int dimY);
 void* fill_array_with_mandelbrotpoint(void* arg)
 {
     ThreadArgs *args = (ThreadArgs*) arg;
-cout << args->start_y << endl;
-    if(-1 != args->start_x)
-    {
-        for(int i = 0; i < args->height; i++)
-        {
-            for(int j = 0; j < args->width; j++)
-            {
-                int x = args->start_x + j;
-                int y = args->start_y + i;
 
-                args->plot[y][x] =  
-                    ComputeMandelbrotPoint (x, y, 0, 0);
-            }
+    //cout << args->start_y << endl;
+    for(int i = 0; i < args->height; i++)
+    {
+        for(int j = 0; j < args->width; j++)
+        {
+            int x = args->start_x + j;
+            int y = args->start_y + i;
+
+            args->plot[y][x] =  
+                ComputeMandelbrotPoint (x, y, 0, 0);
         }
     }
     return NULL;
@@ -54,10 +52,6 @@ cout << args->start_y << endl;
 
 void Mandelbrot_pthreads(int** pts, int dimX, int dimY, int numThreads, int chunkSize) 
 {
-    //////////// add your code here //////////////////////////////////
-    //// creates #numThreads of threads
-    //// for test just evenly divde the works among the threads
-    
     if(1 > numThreads)
     {
         fprintf(stderr, "invalid argument of numThreads = %d\n", numThreads);
@@ -68,103 +62,17 @@ void Mandelbrot_pthreads(int** pts, int dimX, int dimY, int numThreads, int chun
 
     pthread_t* threads = new pthread_t[nThreads]; 
     ThreadArgs* args = new ThreadArgs[nThreads]; 
-
-    // thread creation
-    // for block partition, there will be alway four blocks
-    // the four blocks are defined as a retangular with
-    // following dimensions: dimY/4 X dimX
-    // Each thread will be given a number of block 
-    // untill all threads have work
-    // if there is one thread all work is givne the thread
-    // if there is two threads each thread gets the half
-    // if there is three threads each thread get one
-    // and the first one get one more
-    // if there are four threads
-    // each gets one
-    // threads more than 4 do not receive anywork
     
-    for(int k = 0; k < nThreads; k++){
+    for(int k = 0; k < nThreads; k++)
+    {
         args[k].start_x = 0;
-        if(k != 0)
-            args[k].start_y = (dimY/nThreads)*k;
-        else
-            args[k].start_y = 0;
+        args[k].start_y = (dimY/nThreads)*k;
         args[k].width = dimX;
-        args[k].height = (dimY/nThreads)*(k+1);
-    }
-/*
-    switch(nThreads)
-    {
-        case 1:
-            args[0].start_x = 0;
-            args[0].start_y = 0;
-            args[0].width   = dimX; 
-            args[0].height  = dimY; 
-            break;
-        case 2:
-            args[0].start_x = 0;
-            args[0].start_y = 0;
-            args[0].width   = dimX; 
-            args[0].height  = dimY/2; 
-
-            args[1].start_x = 0;
-            args[1].start_y = dimY/2;
-            args[1].width   = dimX; 
-            args[1].height  = dimY/ 2; 
-            break;    
-        case 3:
-            args[0].start_x = 0;
-            args[0].start_y = 0;
-            args[0].width   = dimX; 
-            args[0].height  = dimY / 4; 
-
-            args[1].start_x = 0;
-            args[1].start_y = dimY / 4;
-            args[1].width   = dimX; 
-            args[1].height  = dimY / 4; 
-
-            args[2].start_x = 0;
-            args[2].start_y = dimY / 2;
-            args[2].width   = dimX; 
-            args[2].height  = dimY/2; 
-            break;
-        default:
-            args[0].start_x = 0;
-            args[0].start_y = 0;
-            args[0].width   = dimX; 
-            args[0].height  = dimY / 4; 
-
-            args[1].start_x = 0;
-            args[1].start_y = dimY / 4;
-            args[1].width   = dimX; 
-            args[1].height  = dimY / 4; 
-
-            args[2].start_x = 0;
-            args[2].start_y = dimY / 2;
-            args[2].width   = dimX; 
-            args[2].height  = dimY / 4; 
-
-            args[3].start_x = 0;
-            args[3].start_y = dimY * 3/4;
-            args[3].width   = dimX; 
-            args[3].height  = dimY / 4; 
-            break;    
-    }
-*/
-    for(int t = 0; t < nThreads; t++)
-    {
-        args[t].tid = t; 
-        args[t].NT = nThreads; 
-        args[t].plot = pts;
-/*        if(t > 3)
-        {
-            args[t].start_x = -1;
-            args[t].start_y = -1;
-            args[t].width   = -1;
-            args[t].height  = -1;
-        }
-*/
-        assert(!pthread_create(&threads[t], NULL, fill_array_with_mandelbrotpoint, &args[t]));
+        args[k].height = (dimY/nThreads);
+        args[k].tid = k; 
+        args[k].NT = nThreads; 
+        args[k].plot = pts;
+        assert(!pthread_create(&threads[k], NULL, fill_array_with_mandelbrotpoint, &args[k]));
     }
 
     for(int t=0; t < nThreads; t++)
