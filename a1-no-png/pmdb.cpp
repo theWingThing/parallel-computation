@@ -13,10 +13,11 @@ struct ThreadArgs
     int tid;          // thread id
     int NT;           // number of thread
     int** plot;       // mandelbrot points storage
-    int start_x;      // start coordinate of x
-    int start_y;      // start coordinate of y
     int64_t width;    // horizontal witdh
     int64_t height;   // horizontal height
+    int* job_queue;   // contains index to the first row of each chunk queued
+    int queue_size;   // num of elements in the array
+    int chunk_size;   // size of chunks in number of rows
 };
 
 // Implemented for you in smdb.h
@@ -36,15 +37,24 @@ void* fill_array_with_mandelbrotpoint(void* arg)
     ThreadArgs *args = (ThreadArgs*) arg;
 
     //cout << args->start_y << endl;
-    for(int i = 0; i < args->height; i++)
-    {
-        for(int j = 0; j < args->width; j++)
-        {
-            int x = args->start_x + j;
-            int y = args->start_y + i;
 
-            args->plot[y][x] =  
-                ComputeMandelbrotPoint (x, y, 0, 0);
+    for(int k = 0; k < args->queue_size; k++)
+    {
+        int start_y = args->job_queue[k];
+        int height  = args->chunk_size;
+        int start_x = 0;
+        int width   = args->width;
+
+        for(int i = 0; i < height; i++)
+        {
+            for(int j = 0; j < width; j++)
+            {
+                int x = start_x + j;
+                int y = start_y + i;
+
+                args->plot[y][x] =  
+                    ComputeMandelbrotPoint (x, y, 0, 0);
+            }
         }
     }
     return NULL;
@@ -63,22 +73,59 @@ void Mandelbrot_pthreads(int** pts, int dimX, int dimY, int numThreads, int chun
     pthread_t* threads = new pthread_t[nThreads]; 
     ThreadArgs* args = new ThreadArgs[nThreads]; 
     
-    for(int k = 0; k < nThreads; k++)
+    if(chunkSize)
     {
-        args[k].start_x = 0;
-        args[k].start_y = (dimY/nThreads)*k;
-        args[k].width = dimX;
-        args[k].height = (dimY/nThreads);
-        args[k].tid = k; 
-        args[k].NT = nThreads; 
-        args[k].plot = pts;
-        assert(!pthread_create(&threads[k], NULL, fill_array_with_mandelbrotpoint, &args[k]));
+        for(int k = 0; k < nThreads; k++)
+        {
+            int queue_size = dimY / (chunkSize * numThreads);
+
+            /*
+            if(dimY % (chunkSize * numThreads) && (nThreads - 1 == k))
+            { 
+                queue_size++;
+            }
+            */
+
+            args[k].job_queue = (int*) malloc(sizeof(int)*(queue_size)); 
+            assert(args[k].job_queue);
+
+            args[k].queue_size = queue_size;
+
+            for(int i = 0; i < queue_size; i++)
+            {
+                args[k].job_queue[i] = k * (chunkSize) + (chunkSize*nThreads) * i;
+            }
+            args[k].width = dimX;
+            args[k].chunk_size = chunkSize;
+            args[k].tid = k; 
+            args[k].NT = nThreads; 
+            args[k].plot = pts;
+            assert(!pthread_create(&threads[k], NULL, fill_array_with_mandelbrotpoint, &args[k]));
+        }
     }
+    else
+    {
+        for(int k = 0; k < nThreads; k++)
+        {
+            args[k].job_queue = (int*) malloc(sizeof(int)); 
+            assert(args[k].job_queue);
+            args[k].queue_size = 1;
+            args[k].job_queue[0] = (dimY/nThreads)*k;
+            args[k].width = dimX;
+            args[k].chunk_size = (dimY/nThreads);
+            args[k].tid = k; 
+            args[k].NT = nThreads; 
+            args[k].plot = pts;
+            assert(!pthread_create(&threads[k], NULL, fill_array_with_mandelbrotpoint, &args[k]));
+        }
+    }
+
 
     for(int t=0; t < nThreads; t++)
     {
         void *value;
         pthread_join(threads[t], &value);
+        free(args[t].job_queue);
     }
 }
 
