@@ -44,7 +44,7 @@ cout << args->start_y << endl;
                 int x = args->start_x + j;
                 int y = args->start_y + i;
 
-                args->plot[x][y] =  
+                args->plot[y][x] =  
                     ComputeMandelbrotPoint (x, y, 0, 0);
             }
         }
@@ -105,10 +105,10 @@ void Mandelbrot_pthreads(int** pts, int dimX, int dimY, int numThreads, int chun
             args[0].start_x = 0;
             args[0].start_y = 0;
             args[0].width   = dimX; 
-            args[0].height  = dimY/ 2; 
+            args[0].height  = dimY/2; 
 
             args[1].start_x = 0;
-            args[1].start_y = dimY;
+            args[1].start_y = dimY/2;
             args[1].width   = dimX; 
             args[1].height  = dimY/ 2; 
             break;    
@@ -145,7 +145,7 @@ void Mandelbrot_pthreads(int** pts, int dimX, int dimY, int numThreads, int chun
             args[2].height  = dimY / 4; 
 
             args[3].start_x = 0;
-            args[3].start_y = dimY / 3;
+            args[3].start_y = dimY * 3/4;
             args[3].width   = dimX; 
             args[3].height  = dimY / 4; 
             break;    
