@@ -34,7 +34,6 @@ int ComputeMandelbrotPoint(int x, int y, int dimX, int dimY);
 void* fill_array_with_mandelbrotpoint(void* arg)
 {
     ThreadArgs *args = (ThreadArgs*) arg;
-cout << args->start_y << endl;
     if(-1 != args->start_x)
     {
         for(int i = 0; i < args->height; i++)
@@ -69,6 +68,10 @@ void Mandelbrot_pthreads(int** pts, int dimX, int dimY, int numThreads, int chun
     pthread_t* threads = new pthread_t[nThreads]; 
     ThreadArgs* args = new ThreadArgs[nThreads]; 
 
+    if(chunkSize != 0){
+
+    }   
+    else{
     // thread creation
     // for block partition, there will be alway four blocks
     // the four blocks are defined as a retangular with
@@ -85,12 +88,9 @@ void Mandelbrot_pthreads(int** pts, int dimX, int dimY, int numThreads, int chun
     
     for(int k = 0; k < nThreads; k++){
         args[k].start_x = 0;
-        if(k != 0)
-            args[k].start_y = (dimY/nThreads)*k;
-        else
-            args[k].start_y = 0;
+        args[k].start_y = (dimY/nThreads)*k;
         args[k].width = dimX;
-        args[k].height = (dimY/nThreads)*(k+1);
+        args[k].height = dimY/nThreads;
     }
 /*
     switch(nThreads)
@@ -149,8 +149,8 @@ void Mandelbrot_pthreads(int** pts, int dimX, int dimY, int numThreads, int chun
             args[3].width   = dimX; 
             args[3].height  = dimY / 4; 
             break;    
-    }
-*/
+    }*/
+}
     for(int t = 0; t < nThreads; t++)
     {
         args[t].tid = t; 
