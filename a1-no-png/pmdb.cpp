@@ -3,6 +3,9 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <iostream>
+
+using namespace std;
 
 // holds thread arguments
 struct ThreadArgs
@@ -31,6 +34,7 @@ int ComputeMandelbrotPoint(int x, int y, int dimX, int dimY);
 void* fill_array_with_mandelbrotpoint(void* arg)
 {
     ThreadArgs *args = (ThreadArgs*) arg;
+cout << args->start_y << endl;
     if(-1 != args->start_x)
     {
         for(int i = 0; i < args->height; i++)
@@ -81,9 +85,12 @@ void Mandelbrot_pthreads(int** pts, int dimX, int dimY, int numThreads, int chun
     
     for(int k = 0; k < nThreads; k++){
         args[k].start_x = 0;
-        args[k].start_y = k/nThreads;
+        if(k != 0)
+            args[k].start_y = (dimY/nThreads)*k;
+        else
+            args[k].start_y = 0;
         args[k].width = dimX;
-        args[k].height = (k+1)/nThreads;
+        args[k].height = (dimY/nThreads)*(k+1);
     }
 /*
     switch(nThreads)
@@ -149,14 +156,14 @@ void Mandelbrot_pthreads(int** pts, int dimX, int dimY, int numThreads, int chun
         args[t].tid = t; 
         args[t].NT = nThreads; 
         args[t].plot = pts;
-        if(t > 3)
+/*        if(t > 3)
         {
             args[t].start_x = -1;
             args[t].start_y = -1;
             args[t].width   = -1;
             args[t].height  = -1;
         }
-
+*/
         assert(!pthread_create(&threads[t], NULL, fill_array_with_mandelbrotpoint, &args[t]));
     }
 
