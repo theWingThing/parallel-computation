@@ -1,0 +1,10 @@
+particle starter code
+parallelization with OpenMP
+
+There are various ways of building this code, which are
+controlled via variable settings on the Make command line
+
+omp=1		Compile with openmp enabled, BLOCK decomposition
+dyn=1		Compile with dynamic scheduling (enables omp)
+chunk=k		Compile with dynamic scheduling and a chunk size of K
+		(enables openmp)
