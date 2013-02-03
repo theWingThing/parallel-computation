@@ -84,7 +84,6 @@ void Mandelbrot_pthreads(int** pts, int dimX, int dimY, int numThreads, int chun
 		queue_size = (dimY / (chunkSize * numThreads))+1;
 	    else
 		queue_size = dimY / (chunkSize * numThreads);
-cerr << "Thread " << k << " has queue size " << queue_size <<endl;
             /*
             if(dimY % (chunkSize * numThreads) && (nThreads - 1 == k))
             { 
@@ -104,7 +103,6 @@ cerr << "Thread " << k << " has queue size " << queue_size <<endl;
 		    args[k].special = dimY % chunkSize;
 		else
 		    args[k].special = 0;
-cerr << "Storing job " << args[k].job_queue[i] << endl;
             }
             args[k].width = dimX;
             args[k].chunk_size = chunkSize;
@@ -112,7 +110,6 @@ cerr << "Storing job " << args[k].job_queue[i] << endl;
             args[k].NT = nThreads; 
             args[k].plot = pts;
             assert(!pthread_create(&threads[k], NULL, fill_array_with_mandelbrotpoint, &args[k]));
-cerr << "got here" << endl;
         }
     }
     else
