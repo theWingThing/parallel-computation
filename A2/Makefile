@@ -3,15 +3,15 @@ BANG   =  $(shell expr match `hostname` ccom-bang)
 BANG-COMPUTE   =  $(shell expr match `hostname` compute)
 
 
-ifneq ($(BANG), 0)
-PUB = /share/class/public/cse160-wi13
-else
-ifneq ($(BANG-COMPUTE), 0)
-PUB = /share/class/public/cse160-wi13
-else
-PUB = /Path/To/Your/Own/machine/here
-endif
-endif
+#ifneq ($(BANG), 0)
+#PUB = /share/class/public/cse160-wi13
+#else
+#ifneq ($(BANG-COMPUTE), 0)
+#PUB = /share/class/public/cse160-wi13
+#else
+PUB = /Users/ged/Documents/School/SourceCodes/cse160/parallel-computation/A2
+#endif
+#endif
 
 include $(PUB)/Arch/arch.gnu-4.7_c++11
 

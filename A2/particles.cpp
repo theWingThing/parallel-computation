@@ -23,6 +23,8 @@
 // reported at the simulation's end
 ///
 //
+#include <thread>
+#include <mutex>
 #include <cstdlib>
 #include <stdio.h>
 #include <math.h>
@@ -39,16 +41,105 @@ extern double size;
 
 extern double dt;
 
+mutex arrival, departure;
+int count = 0;
+int num_threads = 0;
+
 void imbal_particles(particle_t *particles, int n);
-//
+
+void barrier_init(int nt)
+{
+    departure.lock();
+    count = 0;
+    num_threads = nt; 
+}
+
+void barrier(void)
+{ 
+    arrival.lock();
+    count++;
+
+    if(count < num_threads)
+        arrival.unlock();
+    else 
+        departure.unlock();
+
+    departure.lock();
+    count--;
+    if(count > 0)
+        departure.unlock();
+    else arrival.unlock();
+}
+
+// spawn and join threads
+// with call back thread function
+void thread_controller (thread* threads, particle_t* pParticles, void (* func) (particle_t* particles, int tid, int NT, int N), int n)
+{
+    (void) threads;
+
+    // primitive step creates thread
+    // later we will suspend the threads for performance gain
+    thread *thrds = new thread[num_threads];
+
+    for(int t = 0; t < num_threads; t++)
+    {
+        thrds[t] = thread(func, pParticles, t, num_threads, n);
+    }
+
+    for(int t = 0; t < num_threads; t++)
+    { 
+        thrds[t].join();
+    }
+
+    delete [] thrds;
+}
+
+void compute_forces (particle_t* particles, int tid, int NT, int n)
+{
+    int interval = n/NT;
+    int next_tid = tid + 1;
+
+    for (int i = tid; i < interval * next_tid; i++) 
+    {
+        particles[i].ax = particles[i].ay = 0;
+
+        if ((particles[i].vx != 0) || (particles[i].vx != 0))
+        {
+            for (int j = tid; j < interval * next_tid; j++ )
+            {
+                if (i == j)
+                {
+                    continue;
+                }
+
+                double dx = particles[j].x - particles[i].x;
+                double dy = particles[j].y - particles[i].y;
+                double r2 = dx * dx + dy * dy;
+
+                if( r2 > cutoff*cutoff )
+                {
+                    continue;
+                }
+
+                r2 = fmax( r2, min_r*min_r );
+                double r = sqrt( r2 );
+
+                //  very simple short-range repulsive force
+                double coef = ( 1 - cutoff / r ) / r2 / mass;
+                particles[i].ax += coef * dx;
+                particles[i].ay += coef * dy;
+            }
+        }
+    }
+}
 //  compute force between two particles
 //  You should not modify the numerical computations
 //  other than to optimize them
 //  Be careful in optimizing, as some optimizations
 //  can subtly affect the computed answers
-//
-void apply_forces( particle_t* particles, int n){
-
+void apply_forces( particle_t* particles, int n)
+{
+/*
 #ifdef DYN
 #if CHUNK
 #pragma omp parallel for shared(particles,n) schedule(dynamic,CHUNK)
@@ -58,30 +149,10 @@ void apply_forces( particle_t* particles, int n){
 #else
 #pragma omp parallel for shared(particles,n)
 #endif
-    for( int i = 0; i < n; i++ ) {
-        particles[i].ax = particles[i].ay = 0;
-	if ((particles[i].vx != 0) || (particles[i].vx != 0)){
-	    for (int j = 0; j < n; j++ ){
-		if (i==j)
-		    continue;
-		double dx = particles[j].x - particles[i].x;
-		double dy = particles[j].y - particles[i].y;
-		double r2 = dx * dx + dy * dy;
-		if( r2 > cutoff*cutoff )
-		    continue;
-		r2 = fmax( r2, min_r*min_r );
-		double r = sqrt( r2 );
+*/
 
-		//
-		//  very simple short-range repulsive force
-		//
-		double coef = ( 1 - cutoff / r ) / r2 / mass;
-		particles[i].ax += coef * dx;
-		particles[i].ay += coef * dy;
+    thread_controller (NULL, particles, compute_forces, n);
 
-	    }
-        }
-    }
 }
 
 //
@@ -89,24 +160,24 @@ void apply_forces( particle_t* particles, int n){
 //
 void move_particles( particle_t* particles, int n)
 {
-    for( int i = 0; i < n; i++ ) {
-    //
-    //  slightly simplified Velocity Verlet integration
-    //  conserves energy better than explicit Euler method
-    //
+    for( int i = 0; i < n; i++ ) 
+    {
+        //  slightly simplified Velocity Verlet integration
+        //  conserves energy better than explicit Euler method
         particles[i].vx += particles[i].ax * dt;
         particles[i].vy += particles[i].ay * dt;
         particles[i].x  += particles[i].vx * dt;
         particles[i].y  += particles[i].vy * dt;
 
-    //
-    //  bounce off the walls
-    //
-        while( particles[i].x < 0 || particles[i].x > size ) {
+        //  bounce off the walls
+        while( particles[i].x < 0 || particles[i].x > size ) 
+        {
             particles[i].x  = particles[i].x < 0 ? -particles[i].x : 2*size-particles[i].x;
             particles[i].vx = -particles[i].vx;
         }
-        while( particles[i].y < 0 || particles[i].y > size ) {
+
+        while( particles[i].y < 0 || particles[i].y > size ) 
+        {
             particles[i].y  = particles[i].y < 0 ? -particles[i].y : 2*size-particles[i].y;
             particles[i].vy = -particles[i].vy;
         }
@@ -114,38 +185,44 @@ void move_particles( particle_t* particles, int n)
 }
 
 // This is the main driver routine that runs the simulation
-void SimulateParticles(int nsteps, particle_t *particles, int n, int nt, int chunk, int nplot, bool imbal, double &uMax, double &vMax, double &uL2, double &vL2, Plotter *plotter, FILE *fsave ){
-    for( int step = 0; step < nsteps; step++ ) {
-    //
-    //  compute forces
-    //
-	apply_forces(particles,n);
+void SimulateParticles (int nsteps, particle_t *particles, int n, int nt, int chunk, int nplot, bool imbal, double &uMax, double &vMax, double &uL2, double &vL2, Plotter *plotter, FILE *fsave )
+{
+    // set global variable of number of threads
+    num_threads = nt;
 
-	// If we asked for an imbalanced distribution
-	if (imbal)
-	    imbal_particles(particles,n);
-//     Debugging output
-//      list_particles(particles,n);
-    
-    //
-    //  move particles
-    //
-	move_particles(particles,n);
+    for( int step = 0; step < nsteps; step++ ) 
+    {
+        //
+        //  compute forces
+        //
+        apply_forces(particles,n);
+
+        // If we asked for an imbalanced distribution
+        if (imbal)
+            imbal_particles(particles,n);
+        //  Debugging output
+        //  list_particles(particles,n);
+        
+        //
+        //  move particles
+        //
+        move_particles(particles,n);
 
 
-	if (nplot && ((step % nplot ) == 0)){
+        if (nplot && ((step % nplot ) == 0))
+        {
 
-	// Computes the absolute maximum velocity 
-	    VelNorms(particles,n,uMax,vMax,uL2,vL2);
-	    plotter->updatePlot(particles,n,step,uMax,vMax,uL2,vL2);
-	}
+            // Computes the absolute maximum velocity 
+            VelNorms(particles,n,uMax,vMax,uL2,vL2);
+            plotter->updatePlot(particles,n,step,uMax,vMax,uL2,vL2);
+        }
 
-	VelNorms(particles,n,uMax,vMax,uL2,vL2);
-    //
-    //  save if necessary
-    //
-	if( fsave && (step%SAVEFREQ) == 0 )
-	    save( fsave, n, particles );
+        VelNorms(particles,n,uMax,vMax,uL2,vL2);
+        //
+        //  save if necessary
+        //
+        if( fsave && (step%SAVEFREQ) == 0 )
+            save( fsave, n, particles );
     }
 }
 
