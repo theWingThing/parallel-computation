@@ -150,8 +150,42 @@ void apply_forces( particle_t* particles, int n)
 #pragma omp parallel for shared(particles,n)
 #endif
 */
+    int interval = n/NT;
+    int next_tid = tid + 1;
 
-    thread_controller (NULL, particles, compute_forces, n);
+    for (int i = tid; i < interval * next_tid; i++) 
+    {
+        particles[i].ax = particles[i].ay = 0;
+
+        if ((particles[i].vx != 0) || (particles[i].vx != 0))
+        {
+            for (int j = tid; j < interval * next_tid; j++ )
+            {
+                if (i == j)
+                {
+                    continue;
+                }
+
+                double dx = particles[j].x - particles[i].x;
+                double dy = particles[j].y - particles[i].y;
+                double r2 = dx * dx + dy * dy;
+
+                if( r2 > cutoff*cutoff )
+                {
+                    continue;
+                }
+
+                r2 = fmax( r2, min_r*min_r );
+                double r = sqrt( r2 );
+
+                //  very simple short-range repulsive force
+                double coef = ( 1 - cutoff / r ) / r2 / mass;
+                particles[i].ax += coef * dx;
+                particles[i].ay += coef * dy;
+            }
+        }
+    }
+
 
 }
 
@@ -195,7 +229,8 @@ void SimulateParticles (int nsteps, particle_t *particles, int n, int nt, int ch
         //
         //  compute forces
         //
-        apply_forces(particles,n);
+        //apply_forces(particles,n);
+        thread_controller (NULL, particles, apply_forces, n);
 
         // If we asked for an imbalanced distribution
         if (imbal)
@@ -206,7 +241,15 @@ void SimulateParticles (int nsteps, particle_t *particles, int n, int nt, int ch
         //
         //  move particles
         //
-        move_particles(particles,n);
+        //move_particles(particles,n);
+        thread *thrds = new thread[nt];
+        for(int t = 0; t < nt; t++){
+            thrds[t] = thread(move_particles, particles+(n/nt*t), n/nt);
+        
+        //move_particles(particles,n);
+        for(int t = 0; t < nt; t++){
+            thrds[t].join();
+        }
 
 
         if (nplot && ((step % nplot ) == 0))
@@ -223,6 +266,7 @@ void SimulateParticles (int nsteps, particle_t *particles, int n, int nt, int ch
         //
         if( fsave && (step%SAVEFREQ) == 0 )
             save( fsave, n, particles );
+        delete [] thrds;
     }
 }
 
