@@ -204,7 +204,15 @@ void SimulateParticles (int nsteps, particle_t *particles, int n, int nt, int ch
         //
         //  move particles
         //
-        move_particles(particles,n);
+        //move_particles(particles,n);
+        thread *thrds = new thread[nt];
+        for(int t = 0; t < nt; t++){
+            thrds[t] = thread(move_particles, particles+(n/nt*t), n/nt);
+        
+        //move_particles(particles,n);
+        for(int t = 0; t < nt; t++){
+            thrds[t].join();
+        }
 
 
         if (nplot && ((step % nplot ) == 0))
@@ -221,6 +229,7 @@ void SimulateParticles (int nsteps, particle_t *particles, int n, int nt, int ch
         //
         if( fsave && (step%SAVEFREQ) == 0 )
             save( fsave, n, particles );
+        delete [] thrds;
     }
 }
 
