@@ -73,6 +73,7 @@ void thread_controller (thread* threads, particle_t* pParticles, void (* func) (
 {
     (void) threads;
 
+
     // primitive step creates thread
     // later we will suspend the threads for performance gain
     thread *thrds = new thread[num_threads];
@@ -146,17 +147,51 @@ void apply_forces( particle_t* particles, int n)
 #pragma omp parallel for shared(particles,n)
 #endif
 */
-
-    thread_controller (NULL, particles, compute_forces, n);
-
-}
-
-void compute_particles_loc(particle_t* particles, int tid, int NT, int n)
-{    
     int interval = n/NT;
     int next_tid = tid + 1;
 
-    for( int i = tid*interval; i < next_tid*interval; i++ ) 
+    for (int i = tid; i < interval * next_tid; i++) 
+    {
+        particles[i].ax = particles[i].ay = 0;
+
+        if ((particles[i].vx != 0) || (particles[i].vx != 0))
+        {
+            for (int j = tid; j < interval * next_tid; j++ )
+            {
+                if (i == j)
+                {
+                    continue;
+                }
+
+                double dx = particles[j].x - particles[i].x;
+                double dy = particles[j].y - particles[i].y;
+                double r2 = dx * dx + dy * dy;
+
+                if( r2 > cutoff*cutoff )
+                {
+                    continue;
+                }
+
+                r2 = fmax( r2, min_r*min_r );
+                double r = sqrt( r2 );
+
+                //  very simple short-range repulsive force
+                double coef = ( 1 - cutoff / r ) / r2 / mass;
+                particles[i].ax += coef * dx;
+                particles[i].ay += coef * dy;
+            }
+        }
+    }
+
+
+}
+
+//
+//  integrate the ODE, advancing the positions of the particles
+//
+void move_particles( particle_t* particles, int n)
+{
+    for( int i = 0; i < n; i++ ) 
     {
         //  slightly simplified Velocity Verlet integration
         //  conserves energy better than explicit Euler method
@@ -179,14 +214,6 @@ void compute_particles_loc(particle_t* particles, int tid, int NT, int n)
         }
     }
 }
-//
-//  integrate the ODE, advancing the positions of the particles
-//
-void move_particles( particle_t* particles, int n)
-{
-    thread_controller (NULL, particles, compute_particles_loc, n);
-
-}
 
 // This is the main driver routine that runs the simulation
 void SimulateParticles (int nsteps, particle_t *particles, int n, int nt, int chunk, int nplot, bool imbal, double &uMax, double &vMax, double &uL2, double &vL2, Plotter *plotter, FILE *fsave )
@@ -196,8 +223,16 @@ void SimulateParticles (int nsteps, particle_t *particles, int n, int nt, int ch
 
     for( int step = 0; step < nsteps; step++ ) 
     {
+        //
         //  compute forces
+        //
+<<<<<<< HEAD
+
         apply_forces(particles,n);
+=======
+        //apply_forces(particles,n);
+        thread_controller (NULL, particles, apply_forces, n);
+>>>>>>> de5e4492bdb90a8a28f40e72083e8c71564dfc68
 
         // If we asked for an imbalanced distribution
         if (imbal)
@@ -205,21 +240,35 @@ void SimulateParticles (int nsteps, particle_t *particles, int n, int nt, int ch
         //  Debugging output
         //  list_particles(particles,n);
         
+        //
         //  move particles
-        move_particles(particles, n);
+        //
+        //move_particles(particles,n);
+        thread *thrds = new thread[nt];
+        for(int t = 0; t < nt; t++){
+            thrds[t] = thread(move_particles, particles+(n/nt*t), n/nt);
+        
+        //move_particles(particles,n);
+        for(int t = 0; t < nt; t++){
+            thrds[t].join();
+        }
+
 
         if (nplot && ((step % nplot ) == 0))
         {
+
             // Computes the absolute maximum velocity 
             VelNorms(particles,n,uMax,vMax,uL2,vL2);
             plotter->updatePlot(particles,n,step,uMax,vMax,uL2,vL2);
         }
 
         VelNorms(particles,n,uMax,vMax,uL2,vL2);
-
+        //
         //  save if necessary
+        //
         if( fsave && (step%SAVEFREQ) == 0 )
             save( fsave, n, particles );
+        delete [] thrds;
     }
 }
 
