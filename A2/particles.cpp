@@ -25,6 +25,7 @@
 //
 #include <thread>
 #include <mutex>
+#include <condition_variable>
 #include <cstdlib>
 #include <stdio.h>
 #include <math.h>
@@ -41,34 +42,29 @@ extern double size;
 
 extern double dt;
 
-mutex arrival, departure;
+mutex m; 
+condition_variable cond_var;
+
 int count = 0;
 int num_threads = 0;
 
 void imbal_particles(particle_t *particles, int n);
 
-void barrier_init(int nt)
-{
-    departure.lock();
-    count = 0;
-    num_threads = nt; 
-}
-
 void barrier(void)
 { 
-    arrival.lock();
+    std::unique_lock<std::mutex> lock(m);
     count++;
-
-    if(count < num_threads)
-        arrival.unlock();
+    if(count == num_threads)
+    {
+        count = 0;
+        cond_var.notify_all();
+    }
     else 
-        departure.unlock();
+    {
+        cond_var.wait(lock);
+    }
+    lock.unlock();
 
-    departure.lock();
-    count--;
-    if(count > 0)
-        departure.unlock();
-    else arrival.unlock();
 }
 
 // spawn and join threads
@@ -76,6 +72,7 @@ void barrier(void)
 void thread_controller (thread* threads, particle_t* pParticles, void (* func) (particle_t* particles, int tid, int NT, int N), int n)
 {
     (void) threads;
+
 
     // primitive step creates thread
     // later we will suspend the threads for performance gain
@@ -99,13 +96,13 @@ void compute_forces (particle_t* particles, int tid, int NT, int n)
     int interval = n/NT;
     int next_tid = tid + 1;
 
-    for (int i = tid; i < interval * next_tid; i++) 
+    for (int i = tid*interval; i < next_tid*interval; i++) 
     {
         particles[i].ax = particles[i].ay = 0;
 
-        if ((particles[i].vx != 0) || (particles[i].vx != 0))
-        {
-            for (int j = tid; j < interval * next_tid; j++ )
+        if ((particles[i].vx != 0) || (particles[i].vy != 0))
+        {    
+            for (int j = 0; j < n; j++ )
             {
                 if (i == j)
                 {
@@ -195,6 +192,7 @@ void SimulateParticles (int nsteps, particle_t *particles, int n, int nt, int ch
         //
         //  compute forces
         //
+
         apply_forces(particles,n);
 
         // If we asked for an imbalanced distribution
