@@ -48,6 +48,51 @@ condition_variable cond_var;
 int count = 0;
 int num_threads = 0;
 
+class SelfScheduler
+{ 
+    private:
+        int problem_size;
+        int chunk_size;
+        int num_processors;
+        int counter;
+        mutex critical_section;
+
+        SelfScheduler(SelfScheduler& s){};
+
+    public:
+        SelfScheduler():problem_size(0), chunk_size(0),
+            num_processors(0), counter(0){};
+
+        SelfScheduler(int n,int P, int chunk):problem_size(n), 
+            chunk_size(chunk), num_processors(P), counter(0){};
+
+        ~SelfScheduler(){};
+        bool getChunk(int& min, int& max)
+        {
+            critical_section.lock();
+            int k;
+            k = counter;
+            counter += chunk_size;
+            critical_section.unlock();
+
+            if(counter > (problem_size))
+            {
+                return false;
+            }
+
+            min = k; 
+            max = k + chunk_size;
+
+            return true;
+        }
+        void reset()
+        {
+            counter = 0;
+        }
+};
+
+SelfScheduler *scheduler, *scheduler1;
+
 void imbal_particles(particle_t *particles, int n);
 
 void barrier(void)
@@ -67,9 +112,32 @@ void barrier(void)
 
 }
 
+void callback(particle_t* particles, SelfScheduler* self_sche, int tid, int NT, int n, void (*func)(particle_t* particles, int min, int max, int n))
+{        
+    int interval = n/NT;
+    int next_tid = tid + 1;
+
+    int min = tid*interval;
+    int max = next_tid*interval;
+
+    if(self_sche)
+    { 
+
+        while(self_sche->getChunk(min,max))
+        {
+            barrier();
+            func(particles, min, max, n);
+        }
+    }
+    else
+    {
+        func(particles, min, max, n);
+    }
+}     
+
 // spawn and join threads
 // with call back thread function
-void thread_controller (thread* threads, particle_t* pParticles, void (* func) (particle_t* particles, int tid, int NT, int N), int n)
+void thread_controller (thread* threads, particle_t* pParticles, SelfScheduler* self_sche, int n, void (* func) (particle_t* particles, int min, int max, int n))
 {
     (void) threads;
 
@@ -79,7 +147,7 @@ void thread_controller (thread* threads, particle_t* pParticles, void (* func) (
 
     for(int t = 0; t < num_threads; t++)
     {
-        thrds[t] = thread(func, pParticles, t, num_threads, n);
+        thrds[t] = thread(callback, pParticles, self_sche, t, num_threads, n, func);
     }
 
     for(int t = 0; t < num_threads; t++)
@@ -90,12 +158,9 @@ void thread_controller (thread* threads, particle_t* pParticles, void (* func) (
     delete [] thrds;
 }
 
-void compute_forces (particle_t* particles, int tid, int NT, int n)
+void compute_forces (particle_t* particles, int min, int max, int n)
 {
-    int interval = n/NT;
-    int next_tid = tid + 1;
-
-    for (int i = tid*interval; i < next_tid*interval; i++) 
+    for (int i = min; i < max; i++) 
     {
         particles[i].ax = particles[i].ay = 0;
 
@@ -147,16 +212,15 @@ void apply_forces( particle_t* particles, int n)
 #endif
 */
 
-    thread_controller (NULL, particles, compute_forces, n);
+    thread_controller (NULL, particles, scheduler, n, compute_forces);
 
 }
 
-void compute_particles_loc(particle_t* particles, int tid, int NT, int n)
-{    
-    int interval = n/NT;
-    int next_tid = tid + 1;
+void compute_particles_loc(particle_t* particles, int min, int max, int n)
+{
+    (void) n;
 
-    for( int i = tid*interval; i < next_tid*interval; i++ ) 
+    for( int i = min; i < max; i++ ) 
     {
         //  slightly simplified Velocity Verlet integration
         //  conserves energy better than explicit Euler method
@@ -184,7 +248,7 @@ void compute_particles_loc(particle_t* particles, int tid, int NT, int n)
 //
 void move_particles( particle_t* particles, int n)
 {
-    thread_controller (NULL, particles, compute_particles_loc, n);
+    thread_controller (NULL, particles, scheduler1, n, compute_particles_loc);
 
 }
 
@@ -194,10 +258,26 @@ void SimulateParticles (int nsteps, particle_t *particles, int n, int nt, int ch
     // set global variable of number of threads
     num_threads = nt;
 
+    if(0 < chunk)
+    {
+        scheduler = new SelfScheduler(n, nt, chunk);
+        scheduler1 = new SelfScheduler(n, nt, chunk);
+    }
+    else
+    {
+        scheduler = NULL;
+        scheduler1 = NULL;
+    }
+
     for( int step = 0; step < nsteps; step++ ) 
     {
         //  compute forces
         apply_forces(particles,n);
+
+        if(scheduler)
+        {
+            scheduler->reset();
+        }
 
         // If we asked for an imbalanced distribution
         if (imbal)
@@ -207,6 +287,11 @@ void SimulateParticles (int nsteps, particle_t *particles, int n, int nt, int ch
         
         //  move particles
         move_particles(particles, n);
+
+        if(scheduler1)
+        {
+            scheduler1->reset();
+        }
 
         if (nplot && ((step % nplot ) == 0))
         {
@@ -220,6 +305,15 @@ void SimulateParticles (int nsteps, particle_t *particles, int n, int nt, int ch
         //  save if necessary
         if( fsave && (step%SAVEFREQ) == 0 )
             save( fsave, n, particles );
+    }
+    
+    if(scheduler)
+    {
+        delete scheduler;
+    }
+    if(scheduler1)
+    {
+        delete scheduler1;
     }
 }
 
