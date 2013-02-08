@@ -119,15 +119,15 @@ void callback(particle_t* particles, SelfScheduler* self_sche, int tid, int NT, 
 
     int min = tid*interval;
     int max = next_tid*interval;
+    bool bContinue = true;
 
     if(self_sche)
     { 
-
-        while(self_sche->getChunk(min,max))
-        {
-            barrier();
+        while(self_sche->getChunk(min,max)) 
+        { 
             func(particles, min, max, n);
         }
+        barrier();
     }
     else
     {
@@ -280,8 +280,10 @@ void SimulateParticles (int nsteps, particle_t *particles, int n, int nt, int ch
         }
 
         // If we asked for an imbalanced distribution
+        /*
         if (imbal)
             imbal_particles(particles,n);
+            */
         //  Debugging output
         //  list_particles(particles,n);
         
