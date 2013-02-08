@@ -280,10 +280,8 @@ void SimulateParticles (int nsteps, particle_t *particles, int n, int nt, int ch
         }
 
         // If we asked for an imbalanced distribution
-        /*
         if (imbal)
             imbal_particles(particles,n);
-            */
         //  Debugging output
         //  list_particles(particles,n);
         
