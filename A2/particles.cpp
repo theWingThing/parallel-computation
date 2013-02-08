@@ -48,6 +48,8 @@ condition_variable cond_var;
 int count = 0;
 int num_threads = 0;
 
+//void barrier(void);
+
 class SelfScheduler
 { 
     private:
@@ -67,6 +69,10 @@ class SelfScheduler
             chunk_size(chunk), num_processors(P), counter(0){};
 
         ~SelfScheduler(){};
+        bool isDone()
+        {
+            return counter > problem_size;
+        }
         bool getChunk(int& min, int& max)
         {
             critical_section.lock();
@@ -95,11 +101,11 @@ SelfScheduler *scheduler, *scheduler1;
 
 void imbal_particles(particle_t *particles, int n);
 
-void barrier(void)
+void barrier(SelfScheduler* sche)
 { 
     std::unique_lock<std::mutex> lock(m);
     count++;
-    if(count == num_threads)
+    if(count == num_threads || sche->isDone())
     {
         count = 0;
         cond_var.notify_all();
@@ -119,15 +125,19 @@ void callback(particle_t* particles, SelfScheduler* self_sche, int tid, int NT, 
 
     int min = tid*interval;
     int max = next_tid*interval;
-    bool bContinue = true;
+    bool doMore = true;
 
     if(self_sche)
     { 
-        while(self_sche->getChunk(min,max)) 
-        { 
-            func(particles, min, max, n);
+        while(doMore)
+        {      
+            doMore = self_sche->getChunk(min,max); 
+            barrier(self_sche);
+            if(doMore)
+            { 
+                func(particles, min, max, n);
+            }
         }
-        barrier();
     }
     else
     {
