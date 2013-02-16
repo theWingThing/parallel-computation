@@ -39,11 +39,10 @@
 using namespace std;
 
 extern double size;
-
 extern double dt;
 
-mutex m; 
-condition_variable cond_var;
+mutex done;
+bool notDone = true;
 
 int count = 0;
 int num_threads = 0;
@@ -57,7 +56,8 @@ class SelfScheduler
         int chunk_size;
         int num_processors;
         int counter;
-        mutex critical_section;
+        mutex critical_section, m, d;
+        condition_variable cond_var, cond_done;
 
         SelfScheduler(SelfScheduler& s){};
 
@@ -69,10 +69,35 @@ class SelfScheduler
             chunk_size(chunk), num_processors(P), counter(0){};
 
         ~SelfScheduler(){};
+
+        void unlock()
+        {
+            std::unique_lock<std::mutex> lock(m);
+            lock.unlock();
+        }
+
+        void begin_work()
+        {
+            cond_var.notify_all();
+        }
+
+        void cond_wait()
+        {
+            std::unique_lock<std::mutex> lock(m);
+            cond_var.wait(lock);
+        }
+
         bool isDone()
         {
             return counter > problem_size;
         }
+
+        void wait_for_done()
+        {        
+            std::unique_lock<std::mutex> done_lock(d);
+            cond_done.wait(done_lock);
+        }
+
         bool getChunk(int& min, int& max)
         {
             critical_section.lock();
@@ -103,19 +128,18 @@ void imbal_particles(particle_t *particles, int n);
 
 void barrier(SelfScheduler* sche)
 { 
-    std::unique_lock<std::mutex> lock(m);
     count++;
+    
     if(count == num_threads || sche->isDone())
     {
         count = 0;
-        cond_var.notify_all();
+        sche->begin_work();
     }
     else 
     {
-        cond_var.wait(lock);
+        sche->cond_wait();
     }
-    lock.unlock();
-
+    sche->unlock();
 }
 
 void callback(particle_t* particles, SelfScheduler* self_sche, int tid, int NT, int n, void (*func)(particle_t* particles, int min, int max, int n))
@@ -125,34 +149,36 @@ void callback(particle_t* particles, SelfScheduler* self_sche, int tid, int NT, 
 
     int min = tid*interval;
     int max = next_tid*interval;
-    bool doMore = true;
+    bool notDone = true;
 
-    if(self_sche)
-    { 
-        while(doMore)
-        {      
-            doMore = self_sche->getChunk(min,max); 
-            barrier(self_sche);
-            if(doMore)
-            { 
-                func(particles, min, max, n);
+    while(notDone)
+    {
+        if(self_sche)
+        { 
+            bool doMore = true;
+
+            while(doMore)
+            {      
+                doMore = self_sche->getChunk(min,max); 
+                barrier(self_sche);
+                if(doMore)
+                { 
+                    func(particles, min, max, n);
+                }
             }
         }
-    }
-    else
-    {
-        func(particles, min, max, n);
+        else
+        {
+            func(particles, min, max, n);
+        }
+
+        //wait here untill the signal
+        self_sche->cond_wait();
     }
 }     
 
-// spawn and join threads
-// with call back thread function
-void thread_controller (thread* threads, particle_t* pParticles, SelfScheduler* self_sche, int n, void (* func) (particle_t* particles, int min, int max, int n))
+thread* spawn_threads (particle_t* pParticles, SelfScheduler* self_sche, int n, void (* func) (particle_t* particles, int min, int max, int n))
 {
-    (void) threads;
-
-    // primitive step creates thread
-    // later we will suspend the threads for performance gain
     thread *thrds = new thread[num_threads];
 
     for(int t = 0; t < num_threads; t++)
@@ -160,12 +186,21 @@ void thread_controller (thread* threads, particle_t* pParticles, SelfScheduler* 
         thrds[t] = thread(callback, pParticles, self_sche, t, num_threads, n, func);
     }
 
-    for(int t = 0; t < num_threads; t++)
-    { 
-        thrds[t].join();
+    return thrds;
+}
+
+// spawn and join threads
+// with call back thread function
+void thread_controller (particle_t* pParticles, SelfScheduler* self_sche, int n, void (* func) (particle_t* particles, int min, int max, int n))
+{
+    // wake up threads
+    if(scheduler)
+    {
+        scheduler->begin_work();
     }
 
-    delete [] thrds;
+    self_sche->wait_for_done();
+    self_sche->reset();
 }
 
 void compute_forces (particle_t* particles, int min, int max, int n)
@@ -222,7 +257,7 @@ void apply_forces( particle_t* particles, int n)
 #endif
 */
 
-    thread_controller (NULL, particles, scheduler, n, compute_forces);
+    thread_controller (particles, scheduler, n, compute_forces);
 
 }
 
@@ -258,15 +293,20 @@ void compute_particles_loc(particle_t* particles, int min, int max, int n)
 //
 void move_particles( particle_t* particles, int n)
 {
-    thread_controller (NULL, particles, scheduler1, n, compute_particles_loc);
+    thread_controller (particles, scheduler1, n, compute_particles_loc);
 
 }
 
 // This is the main driver routine that runs the simulation
 void SimulateParticles (int nsteps, particle_t *particles, int n, int nt, int chunk, int nplot, bool imbal, double &uMax, double &vMax, double &uL2, double &vL2, Plotter *plotter, FILE *fsave )
 {
+    thread* thrds, *thrds1;
     // set global variable of number of threads
     num_threads = nt;
+
+    done.lock();
+    notDone = true;
+    done.unlock();
 
     if(0 < chunk)
     {
@@ -279,8 +319,12 @@ void SimulateParticles (int nsteps, particle_t *particles, int n, int nt, int ch
         scheduler1 = NULL;
     }
 
-    for( int step = 0; step < nsteps; step++ ) 
+    thrds = spawn_threads (particles, scheduler, n, compute_forces);
+    thrds1 = spawn_threads(particles, scheduler1, n, compute_particles_loc);
+
+    for(int step = 0; step < nsteps; step++ ) 
     {
+
         //  compute forces
         apply_forces(particles,n);
 
@@ -295,13 +339,9 @@ void SimulateParticles (int nsteps, particle_t *particles, int n, int nt, int ch
         //  Debugging output
         //  list_particles(particles,n);
         
+
         //  move particles
         move_particles(particles, n);
-
-        if(scheduler1)
-        {
-            scheduler1->reset();
-        }
 
         if (nplot && ((step % nplot ) == 0))
         {
@@ -317,6 +357,28 @@ void SimulateParticles (int nsteps, particle_t *particles, int n, int nt, int ch
             save( fsave, n, particles );
     }
     
+    done.lock();
+    notDone = false;
+    done.unlock();
+
+    //join_threads
+    scheduler->begin_work();
+
+    for(int t = 0; t < num_threads; t++)
+    { 
+        thrds[t].join();
+    }
+
+    scheduler1->begin_work();
+
+    for(int t = 0; t < num_threads; t++)
+    { 
+        thrds1[t].join();
+    }
+
+    delete [] thrds;
+    delete [] thrds1;
+
     if(scheduler)
     {
         delete scheduler;
