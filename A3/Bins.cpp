@@ -36,12 +36,17 @@ void Bins::SortParticles(int n, particle_t* particles)
 	}
 }
 
+void call_apply_forces(int i, int nt, int boxesCount, Box* boxes){
+  for(int j = i * (boxesCount/nt); j < (i+1) * (boxesCount/nt) - 1; j++)
+    boxes[j].apply_forces();
+} 
+
 //
 // Apply forces to all the bins
 //
-void Bins::apply_forces()
+void Bins::apply_forces(int nt)
 {
-#ifdef  _OPENMP
+/*#ifdef  _OPENMP
 #ifdef DYN
 #if CHUNK
 #pragma omp parallel for  schedule(dynamic,CHUNK)
@@ -54,7 +59,13 @@ void Bins::apply_forces()
 #endif
   for(int i=0; i < boxesCount; ++i)
     boxes[i].apply_forces();
- 
+*/ 
+  thread *thrds = new thread[nt];
+  for(int i = 0; i < nt; ++i)
+      thrds[i] = thread(call_apply_forces, i, nt, boxesCount, boxes);
+  for(int i = 0; i < nt; ++i)
+    thrds[i].join();
+
 }
 
 //
@@ -134,12 +145,11 @@ void Bins::move_particles(double dt)
 }
 
 void Bins::SimulateParticles(int nsteps, particle_t* particles, int n, int nt, int chunk, int nplot, bool imbal, double &uMax, double &vMax, double &uL2, double &vL2, Plotter *plotter, FILE *fsave, int nx, int ny, double dt ){
-    *thrds = new thread[nt];
     for( int step = 0; step < nsteps; step++ ) {
     //
     //  compute forces
     //
-	apply_forces();
+	apply_forces(nt);
 
 //     Debugging output
 //      list_particles(particles,n);
