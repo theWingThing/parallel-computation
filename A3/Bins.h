@@ -18,7 +18,7 @@ public:
 	~Bins();
 	void SortParticles(int n, particle_t* particles);
 	void apply_forces(int nt);
-	void move_particles(double dt);
+	void move_particles(double dt, int nt);
 	void SimulateParticles(int nsteps, particle_t* particles, int n, int nt, int chunk, int nplot, bool imbal, double &uMax, double &vMax, double &uL2, double &vL2, Plotter *plotter, FILE *fsave, int nx, int ny, double dt );
 
 	Box* boxes; // boxes inside the bins

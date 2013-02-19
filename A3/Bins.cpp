@@ -68,12 +68,18 @@ void Bins::apply_forces(int nt)
 
 }
 
+void call_move_particles(int i, int nt, int boxesCount, Box* boxes, double dt){
+  for(int j = i * (boxesCount/nt); j < (i+1) * (boxesCount/nt) - 1; j++)
+    boxes[j].move_particles(dt);
+} 
+
+
 //
 // Move the particles in all the bins
 //
-void Bins::move_particles(double dt)
+void Bins::move_particles(double dt, int nt)
 {
-#ifdef  _OPENMP
+/*#ifdef  _OPENMP
 #ifdef DYN
 #if CHUNK
 #pragma omp parallel for shared(dt) schedule(dynamic,CHUNK)
@@ -86,6 +92,12 @@ void Bins::move_particles(double dt)
 #endif
   for(int i=0; i < boxesCount; ++i)
     boxes[i].move_particles(dt);
+*/ 
+  thread *thrds = new thread[nt];
+  for(int i = 0; i < nt; ++i)
+      thrds[i] = thread(call_move_particles, i, nt, boxesCount, boxes, dt);
+  for(int i = 0; i < nt; ++i)
+    thrds[i].join();
 
 
 //
@@ -157,7 +169,7 @@ void Bins::SimulateParticles(int nsteps, particle_t* particles, int n, int nt, i
     //
     //  move particles
     //
-	move_particles(dt);
+	move_particles(dt, nt);
 
 
 	if (nplot && ((step % nplot ) == 0)){
