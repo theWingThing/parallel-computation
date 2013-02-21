@@ -101,6 +101,8 @@ int main( int argc, char **argv )
     cout << endl;
 #endif
 #endif
+#else
+    cout << "Number of C++11 threads:  " << nt << endl;
 #endif
 
     // Box the particles into nx by ny regions

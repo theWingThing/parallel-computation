@@ -4,7 +4,98 @@
 #include <iostream>
 #include "Bins.h"
 #include "Box.h"
+#include <mutex>
+#include <condition_variable>
+mutex m;
+condition_variable cond_var;
 
+int count = 0;
+int num_threads = 1;
+
+class SelfScheduler
+{
+    private:
+        int problem_size;
+        int chunk_size;
+        int num_processors;
+        int counter;
+        mutex critical_section;
+
+        SelfScheduler(SelfScheduler& s){};
+
+    public:
+        SelfScheduler():problem_size(0), chunk_size(0),
+            num_processors(0), counter(0){};
+
+        SelfScheduler(int n,int P, int chunk):problem_size(n),
+            chunk_size(chunk), num_processors(P), counter(0){};
+
+        ~SelfScheduler(){};
+        bool isDone()
+        {
+            return counter > problem_size;
+        }
+        bool getChunk(int& min, int& max)
+        {
+            critical_section.lock();
+            int k;
+            k = counter;
+            counter += chunk_size;
+            critical_section.unlock();
+
+            if(counter > (problem_size))
+            {
+                return false;
+            }
+
+            min = k;
+            max = k + chunk_size;
+
+            return true;
+        }
+        void reset()
+        {
+            counter = 0;
+        }
+};
+
+SelfScheduler *scheduler, *scheduler1;
+
+void barrier(SelfScheduler* sche)
+{
+    std::unique_lock<std::mutex> lock(m);
+    count++;
+    if(count == num_threads || sche->isDone())
+    {
+        count = 0;
+        cond_var.notify_all();
+    }
+    else
+    {
+        cond_var.wait(lock);
+    }
+    lock.unlock();
+
+}
+
+void barrier()
+{
+    std::unique_lock<std::mutex> lock(m);
+    count++;
+    if(count == num_threads)
+    {
+cerr << "releasing" << endl;
+        count = 0;
+        cond_var.notify_all();
+    }
+    else
+    {
+cerr << "waiting" << endl;
+        cond_var.wait(lock);
+    }
+    lock.unlock();
+
+}
 Bins::Bins(double size, int nx, int ny, int np, int n, particle_t* particles) : _size(size), _nx(nx), _ny(ny), _np(np), _n(n)
 {
 	boxesCount = nx * ny;
@@ -45,8 +136,8 @@ void call_apply_forces(int i, int nt, int boxesCount, Box* boxes){
 // Apply forces to all the bins
 //
 void Bins::apply_forces(int nt)
-{
-/*#ifdef  _OPENMP
+{/*
+#ifdef  _OPENMP
 #ifdef DYN
 #if CHUNK
 #pragma omp parallel for  schedule(dynamic,CHUNK)
@@ -65,7 +156,7 @@ void Bins::apply_forces(int nt)
       thrds[i] = thread(call_apply_forces, i, nt, boxesCount, boxes);
   for(int i = 0; i < nt; ++i)
     thrds[i].join();
-
+  delete [] thrds;
 }
 
 void call_move_particles(int i, int nt, int boxesCount, Box* boxes, double dt){
@@ -73,7 +164,10 @@ void call_move_particles(int i, int nt, int boxesCount, Box* boxes, double dt){
     boxes[j].move_particles(dt);
 } 
 
-
+void call_update_particles(int i, int nt, int boxesCount, Box* boxes){
+  for(int j = i * (boxesCount/nt); j < (i+1) * (boxesCount/nt) - 1; j++)
+    boxes[j].UpdateInboundParticles();
+}
 //
 // Move the particles in all the bins
 //
@@ -98,8 +192,7 @@ void Bins::move_particles(double dt, int nt)
       thrds[i] = thread(call_move_particles, i, nt, boxesCount, boxes, dt);
   for(int i = 0; i < nt; ++i)
     thrds[i].join();
-
-
+  
 //
 // After moving the particles, we check each particle
 // to see if it moved outside its curren box
@@ -109,14 +202,13 @@ void Bins::move_particles(double dt, int nt)
   for(int i=0; i < boxesCount; ++i)
     boxes[i].UpdateParticlesBox();
 
-
 //
 // After we've updated all the inbound lists
 // We then make a new pass, incorporating into this bin,
 // any particles on the inbound list
 // This work parallelizes
 //
-
+/*
 #ifdef  _OPENMP
 #ifdef DYN
 #if CHUNK
@@ -130,7 +222,16 @@ void Bins::move_particles(double dt, int nt)
 #endif
   for(int i=0; i < boxesCount; ++i)
     boxes[i].UpdateInboundParticles();
-  
+*/
+  thrds = new thread[nt];
+  for(int i = 0; i < nt; ++i)
+      thrds[i] = thread(call_update_particles, i, nt, boxesCount, boxes);
+
+  for(int i = 0; i < nt; ++i)
+    thrds[i].join();
+
+  delete [] thrds;
+ 
 
 #ifdef _DEBUG
 //
@@ -157,6 +258,7 @@ void Bins::move_particles(double dt, int nt)
 }
 
 void Bins::SimulateParticles(int nsteps, particle_t* particles, int n, int nt, int chunk, int nplot, bool imbal, double &uMax, double &vMax, double &uL2, double &vL2, Plotter *plotter, FILE *fsave, int nx, int ny, double dt ){
+    num_threads = nt;
     for( int step = 0; step < nsteps; step++ ) {
     //
     //  compute forces
