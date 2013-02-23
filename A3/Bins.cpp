@@ -11,6 +11,14 @@ condition_variable cond_var;
 
 int count = 0;
 int num_threads = 1;
+int chunk_size = 0;
+
+struct ThreadArgs{
+    int tid;
+    int queue_size;
+    int* job_queue;
+    int special;
+} *args;
 
 class SelfScheduler
 {
@@ -59,7 +67,7 @@ class SelfScheduler
         }
 };
 
-SelfScheduler *scheduler, *scheduler1;
+SelfScheduler *app_forces, *upd_part, *move_part;
 
 void barrier(SelfScheduler* sche)
 {
@@ -78,24 +86,6 @@ void barrier(SelfScheduler* sche)
 
 }
 
-void barrier()
-{
-    std::unique_lock<std::mutex> lock(m);
-    count++;
-    if(count == num_threads)
-    {
-cerr << "releasing" << endl;
-        count = 0;
-        cond_var.notify_all();
-    }
-    else
-    {
-cerr << "waiting" << endl;
-        cond_var.wait(lock);
-    }
-    lock.unlock();
-
-}
 Bins::Bins(double size, int nx, int ny, int np, int n, particle_t* particles) : _size(size), _nx(nx), _ny(ny), _np(np), _n(n)
 {
 	boxesCount = nx * ny;
@@ -132,6 +122,11 @@ void call_apply_forces(int i, int nt, int boxesCount, Box* boxes){
     boxes[j].apply_forces();
 } 
 
+void dynamic_apply_forces(int id, Box* boxes){
+  for(int k = 0; k < args[id].queue_size; k++){
+    boxes[args[id].job_queue[k]].apply_forces();
+  }
+}
 //
 // Apply forces to all the bins
 //
@@ -152,8 +147,16 @@ void Bins::apply_forces(int nt)
     boxes[i].apply_forces();
 */ 
   thread *thrds = new thread[nt];
-  for(int i = 0; i < nt; ++i)
-      thrds[i] = thread(call_apply_forces, i, nt, boxesCount, boxes);
+  if(!chunk_size){
+      for(int i = 0; i < nt; ++i){
+          thrds[i] = thread(call_apply_forces, i, nt, boxesCount, boxes);
+      }
+  }
+  else{
+      for(int i = 0; i < nt; ++i){
+          thrds[i] = thread(dynamic_apply_forces, i, boxes);
+      }
+  }
   for(int i = 0; i < nt; ++i)
     thrds[i].join();
   delete [] thrds;
@@ -164,16 +167,28 @@ void call_move_particles(int i, int nt, int boxesCount, Box* boxes, double dt){
     boxes[j].move_particles(dt);
 } 
 
+void dynamic_move_particles(int id, Box* boxes, double dt){
+  for(int k = 0; k < args[id].queue_size; k++){
+    boxes[args[id].job_queue[k]].move_particles(dt);
+  }
+}
+
 void call_update_particles(int i, int nt, int boxesCount, Box* boxes){
   for(int j = i * (boxesCount/nt); j < (i+1) * (boxesCount/nt) - 1; j++)
     boxes[j].UpdateInboundParticles();
 }
+void dynamic_update_particles(int id, Box* boxes){
+  for(int k = 0; k < args[id].queue_size; k++){
+    boxes[args[id].job_queue[k]].UpdateInboundParticles();
+  }
+}
+
 //
 // Move the particles in all the bins
 //
 void Bins::move_particles(double dt, int nt)
-{
-/*#ifdef  _OPENMP
+{/*
+#ifdef  _OPENMP
 #ifdef DYN
 #if CHUNK
 #pragma omp parallel for shared(dt) schedule(dynamic,CHUNK)
@@ -186,10 +201,17 @@ void Bins::move_particles(double dt, int nt)
 #endif
   for(int i=0; i < boxesCount; ++i)
     boxes[i].move_particles(dt);
-*/ 
+*/
   thread *thrds = new thread[nt];
+   if(!chunk_size){
   for(int i = 0; i < nt; ++i)
       thrds[i] = thread(call_move_particles, i, nt, boxesCount, boxes, dt);
+  }
+  else{
+      for(int i = 0; i < nt; ++i){
+          thrds[i] = thread(dynamic_move_particles, i, boxes, dt);
+      }
+  }
   for(int i = 0; i < nt; ++i)
     thrds[i].join();
   
@@ -224,9 +246,15 @@ void Bins::move_particles(double dt, int nt)
     boxes[i].UpdateInboundParticles();
 */
   thrds = new thread[nt];
+   if(!chunk_size){
   for(int i = 0; i < nt; ++i)
       thrds[i] = thread(call_update_particles, i, nt, boxesCount, boxes);
-
+  }
+  else{
+      for(int i = 0; i < nt; ++i){
+          thrds[i] = thread(dynamic_update_particles, i, boxes);
+      }
+  }
   for(int i = 0; i < nt; ++i)
     thrds[i].join();
 
@@ -259,6 +287,31 @@ void Bins::move_particles(double dt, int nt)
 
 void Bins::SimulateParticles(int nsteps, particle_t* particles, int n, int nt, int chunk, int nplot, bool imbal, double &uMax, double &vMax, double &uL2, double &vL2, Plotter *plotter, FILE *fsave, int nx, int ny, double dt ){
     num_threads = nt;
+    args = new ThreadArgs[nt];
+    chunk_size = chunk;
+    if(chunk){
+	for(int k = 0; k < nt; k++){
+	    int extra = (boxesCount/chunk)%nt;
+	    int queue_size;
+	    if(k < extra || (boxesCount%chunk != 0 && k == extra))
+		queue_size = (boxesCount / (chunk * nt)) + 1;
+	    else
+		queue_size = boxesCount / (chunk * nt);
+	    args[k].job_queue = (int*) malloc(sizeof(int)*queue_size);
+	    //assert(args[k].job_queue);
+
+	    args[k].queue_size = queue_size;
+	    args[k].tid = k;
+
+	    for(int j = 0; j < args[k].queue_size; j++){
+		args[k].job_queue[j] = k * chunk_size + (chunk_size * nt) * j;
+		if(j == queue_size - 1 && boxesCount % chunk_size != 0)
+		    args[k].special = boxesCount % chunk_size;
+		else
+		    args[k].special = 0;
+	    }
+	}
+    }
     for( int step = 0; step < nsteps; step++ ) {
     //
     //  compute forces

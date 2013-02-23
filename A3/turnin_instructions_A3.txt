@@ -1,0 +1,57 @@
+        --- Welcome to CSE 160 Turnin help --
+
+To ensure a successful turnin, be sure to complete the following steps.
+The turnin script will  make various checks to ensure that your
+turnin is complete; if there are any missing, or incorrect parts,
+your turnin will not be accepted.
+
+You may turnin in as many times as you wish, up until the deadline.
+Each successive turnin will overwrite the previous one. For this
+reason, we highly recommend that you make an early turnin
+even if you code is not complete, so that the various parts
+are all present and accounted for.
+
+
+A complete turnin includes not only the source files (with Makefile), but
+a report, and 3 properly filled in forms.  The MEMBERS, DECLARATION
+and Team Eval forms are available in this directory
+
+report.{pdf,txt,html}
+        Your report
+        The report may be in any of the following formats PDF, ASCII or html. 
+
+MEMBERS
+        A listing of all team members, full name and email address
+
+DECLARATION
+	A declaration stating that your team did its own work.
+
+teameval.txt
+        A self-evaluation discussing the division of labor and other
+        aspects of how you worked together as a team
+
+-----
+Steps for turnin
+
+1. Cd to the directory containing your complete turnin
+
+2. Invoke the turnin command for the assignment:
+	shell> $PUB/turnin/turnin_A3
+
+3. The script will inform you if any of the required files are missing. 
+
+4. Next the script will remove all the object files, and executables (including   shell scripts) present in the directory since they are not to be turned in.    It is better not to keep unnecessary files in the home directory when you 
+   turnin.
+
+5. Then the script will use your Makefile and compile your source code.
+    If a proper executable was not build then turnin will not complete.
+    You cannot turnin an assignment that doesn't compile and build the
+    target.
+
+6. After this your assignment will be turned in and you will receive
+   a "TURNIN SUCCESSFUL" message. If you did not get this message that means 
+   the turnin is not successful.
+
+    Please post to the web board for the assignment if you have any questions
+    or issues with the turnin process
+  
