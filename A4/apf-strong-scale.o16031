@@ -1,0 +1,440 @@
+
+ *** Current working directory
+/home/inwoo/A4
+
+ *** Compiler
+Using built-in specs.
+COLLECT_GCC=gcc
+COLLECT_LTO_WRAPPER=/share/apps/opt/gcc-4.7.2/libexec/gcc/x86_64-unknown-linux-gnu/4.7.2/lto-wrapper
+Target: x86_64-unknown-linux-gnu
+Configured with: ../configure --prefix=/share/apps/opt/gcc-4.7.2 --with-mpfr=/share/apps/opt/gcc-4.7.2 --with-gmp=/share/apps/opt/gcc-4.7.2 --enable-languages=c,c++,fortran
+Thread model: posix
+gcc version 4.7.2 (GCC) 
+
+ *** Environment
+SET_HOST_TYPE= -x 
+PDSHROOT=/opt/pdsh
+MANPATH=/usr/mpi/gcc/openmpi-1.4.3/share/man:/opt/gridengine/man:/share/apps/opt/gcc-4.7.2/bin:/usr/bin/:/usr/lib64/qt-3.3/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:/opt/eclipse:/opt/ganglia/bin:/opt/ganglia/sbin:/usr/java/latest/bin:/opt/pdsh/bin:/opt/rocks/bin:/opt/rocks/sbin:/opt/gridengine/bin/lx26-amd64:/share/apps/bin:/share/apps/sbin:/home/inwoo/bin
+HOSTNAME=compute-0-19.local
+SGE_TASK_STEPSIZE=undefined
+SGE_INFOTEXT_MAX_COLUMN=5000
+SHELL=/bin/bash
+TERM=xterm-256color
+NHOSTS=1
+HISTSIZE=1000
+ECLIPSE_HOME=/opt/eclipse
+SGE_O_WORKDIR=/home/inwoo/A4
+TMPDIR=/tmp/16031.1.normal.q
+SSH_CLIENT=98.155.78.173 50735 22
+SGE_O_HOME=/home/inwoo
+SGE_ARCH=lx26-amd64
+SGE_CELL=default
+MPICH_PROCESS_GROUP=no
+OLDPWD=/home/inwoo/A4
+QTDIR=/usr/lib64/qt-3.3
+QTINC=/usr/lib64/qt-3.3/include
+RESTARTED=0
+SSH_TTY=/dev/pts/4
+ANT_HOME=/opt/rocks
+ARC=lx26-amd64
+USER=inwoo
+LS_COLORS=rs=0:di=38;5;27:ln=38;5;51:mh=44;38;5;15:pi=40;38;5;11:so=38;5;13:do=38;5;5:bd=48;5;232;38;5;11:cd=48;5;232;38;5;3:or=48;5;232;38;5;9:mi=05;48;5;232;38;5;15:su=48;5;196;38;5;15:sg=48;5;11;38;5;16:ca=48;5;196;38;5;226:tw=48;5;10;38;5;16:ow=48;5;10;38;5;21:st=48;5;21;38;5;15:ex=38;5;34:*.tar=38;5;9:*.tgz=38;5;9:*.arj=38;5;9:*.taz=38;5;9:*.lzh=38;5;9:*.lzma=38;5;9:*.tlz=38;5;9:*.txz=38;5;9:*.zip=38;5;9:*.z=38;5;9:*.Z=38;5;9:*.dz=38;5;9:*.gz=38;5;9:*.lz=38;5;9:*.xz=38;5;9:*.bz2=38;5;9:*.tbz=38;5;9:*.tbz2=38;5;9:*.bz=38;5;9:*.tz=38;5;9:*.deb=38;5;9:*.rpm=38;5;9:*.jar=38;5;9:*.rar=38;5;9:*.ace=38;5;9:*.zoo=38;5;9:*.cpio=38;5;9:*.7z=38;5;9:*.rz=38;5;9:*.jpg=38;5;13:*.jpeg=38;5;13:*.gif=38;5;13:*.bmp=38;5;13:*.pbm=38;5;13:*.pgm=38;5;13:*.ppm=38;5;13:*.tga=38;5;13:*.xbm=38;5;13:*.xpm=38;5;13:*.tif=38;5;13:*.tiff=38;5;13:*.png=38;5;13:*.svg=38;5;13:*.svgz=38;5;13:*.mng=38;5;13:*.pcx=38;5;13:*.mov=38;5;13:*.mpg=38;5;13:*.mpeg=38;5;13:*.m2v=38;5;13:*.mkv=38;5;13:*.ogm=38;5;13:*.mp4=38;5;13:*.m4v=38;5;13:*.mp4v=38;5;13:*.vob=38;5;13:*.qt=38;5;13:*.nuv=38;5;13:*.wmv=38;5;13:*.asf=38;5;13:*.rm=38;5;13:*.rmvb=38;5;13:*.flc=38;5;13:*.avi=38;5;13:*.fli=38;5;13:*.flv=38;5;13:*.gl=38;5;13:*.dl=38;5;13:*.xcf=38;5;13:*.xwd=38;5;13:*.yuv=38;5;13:*.cgm=38;5;13:*.emf=38;5;13:*.axv=38;5;13:*.anx=38;5;13:*.ogv=38;5;13:*.ogx=38;5;13:*.aac=38;5;45:*.au=38;5;45:*.flac=38;5;45:*.mid=38;5;45:*.midi=38;5;45:*.mka=38;5;45:*.mp3=38;5;45:*.mpc=38;5;45:*.ogg=38;5;45:*.ra=38;5;45:*.wav=38;5;45:*.axa=38;5;45:*.oga=38;5;45:*.spx=38;5;45:*.xspf=38;5;45:
+LD_LIBRARY_PATH=/usr/mpi/gcc/openmpi-1.4.3/lib64:/share/apps/opt/gcc-4.7.2/lib:/share/apps/opt/gcc-4.7.2/lib64:/opt/gridengine/lib/lx26-amd64
+SGE_TASK_LAST=undefined
+QUEUE=normal.q
+ROCKS_ROOT=/opt/rocks
+SGE_TASK_ID=undefined
+SGE_BINARY_PATH=/opt/gridengine/bin/lx26-amd64
+MAIL=/var/spool/mail/inwoo
+PATH=/tmp/16031.1.normal.q:/usr/mpi/gcc/openmpi-1.4.3/bin:/share/apps/opt/gcc-4.7.2/bin:/usr/bin/:/usr/lib64/qt-3.3/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:/opt/eclipse:/opt/ganglia/bin:/opt/ganglia/sbin:/usr/java/latest/bin:/opt/pdsh/bin:/opt/rocks/bin:/opt/rocks/sbin:/opt/gridengine/bin/lx26-amd64:/share/apps/bin:/share/apps/sbin:/home/inwoo/bin
+RUNLEVEL=5
+SGE_STDERR_PATH=/home/inwoo/A4/apf-strong-scale.o16031
+PWD=/home/inwoo/A4
+JOB=rc
+JAVA_HOME=/usr/java/latest
+_LMFILES_=/etc/modulefiles/gcc-4.7.2:/etc/modulefiles/openmpi_gcc-1.4.3
+SGE_STDOUT_PATH=/home/inwoo/A4/apf-strong-scale.o16031
+SGE_ACCOUNT=sge
+SGE_RSH_COMMAND=/usr/bin/ssh
+SGE_EXECD_PORT=537
+RESULT=ok
+LANG=en_US.UTF-8
+JOB_SCRIPT=/opt/gridengine/default/spool/compute-0-19/job_scripts/16031
+JOB_NAME=apf-strong-scale
+MODULEPATH=/usr/share/Modules/modulefiles:/etc/modulefiles
+SGE_QMASTER_PORT=536
+LOADEDMODULES=gcc-4.7.2:openmpi_gcc-1.4.3
+SGE_NOMSG=1
+SGE_ROOT=/opt/gridengine
+ROCKS_USER_MODULE_DEF=true
+REQNAME=apf-strong-scale
+SGE_JOB_SPOOL_DIR=/opt/gridengine/default/spool/compute-0-19/active_jobs/16031.1
+ENVIRONMENT=BATCH
+KRB5CCNAME=FILE:/tmp/krb5cc_3081_I7WH4l
+HISTCONTROL=ignoredups
+SSH_ASKPASS=/usr/libexec/openssh/gnome-ssh-askpass
+PE_HOSTFILE=/opt/gridengine/default/spool/compute-0-19/active_jobs/16031.1/pe_hostfile
+HOME=/home/inwoo
+SHLVL=2
+SGE_CWD_PATH=/home/inwoo/A4
+NQUEUES=1
+SGE_O_LOGNAME=inwoo
+SGE_O_MAIL=/var/spool/mail/inwoo
+MPIHOME=/usr/mpi/gcc/openmpi-1.4.3
+UPSTART_INSTANCE=
+TMP=/tmp/16031.1.normal.q
+JOB_ID=16031
+LOGNAME=inwoo
+UPSTART_EVENTS=stopping
+CVS_RSH=ssh
+QTLIB=/usr/lib64/qt-3.3/lib
+PE=orte
+SSH_CONNECTION=98.155.78.173 50735 132.239.145.212 22
+SGE_TASK_FIRST=undefined
+MODULESHOME=/usr/share/Modules
+LESSOPEN=|/usr/bin/lesspipe.sh %s
+SGE_O_PATH=/usr/mpi/gcc/openmpi-1.4.3/bin:/share/apps/opt/gcc-4.7.2/bin:/usr/bin/:/usr/lib64/qt-3.3/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:/opt/eclipse:/opt/ganglia/bin:/opt/ganglia/sbin:/usr/java/latest/bin:/opt/pdsh/bin:/opt/rocks/bin:/opt/rocks/sbin:/opt/gridengine/bin/lx26-amd64:/share/apps/bin:/share/apps/sbin:/home/inwoo/bin
+UPSTART_JOB=rocks-post
+INSTANCE=
+SGE_O_HOST=ccom-bang-login
+SGE_O_SHELL=/bin/bash
+DISPLAY=localhost:16.0
+SGE_CLUSTER_NAME=ccom-bang
+REQUEST=apf-strong-scale
+NSLOTS=8
+PUB=/share/class/public/cse160-wi13
+SGE_STDIN_PATH=/dev/null
+G_BROKEN_FILENAMES=1
+SCRATCH=/scratch/inwoo
+_=/usr/bin/printenv
+
+>>> Job Starts
+Mon Mar  4 23:29:28 PST 2013
+px, py, myrank: 1, 1, 0
+
+[Simulation begins] Mon Mar  4 23:29:28 2013
+
+dt= 0.0223951, # iters = 1000
+m x n = 400 x 400
+processor geometry: 1 x 1
+
+Compiled with MPI DISabled
+
+[Simulation completes] Mon Mar  4 23:29:30 2013
+
+End at iteration 1000
+Max norm: 9.927205e-01, L2norm: 6.035786e-01
+Running Time: 2.78336 sec.
+GFlop rate: 1.62
+
+  M x N, [px x py]       [#iter] {T_p, Gflops} Linf, L2
+># 400 400 [1 1] 	[ 1000] {2.783 1.618} 9.92721e-01 6.03579e-01
+px, py, myrank: 1, 1, 0
+
+[Simulation begins] Mon Mar  4 23:29:30 2013
+
+dt= 0.0223951, # iters = 1000
+m x n = 400 x 400
+processor geometry: 1 x 1
+
+Compiled with MPI DISabled
+
+[Simulation completes] Mon Mar  4 23:29:33 2013
+
+End at iteration 1000
+Max norm: 9.927205e-01, L2norm: 6.035786e-01
+Running Time: 2.8209 sec.
+GFlop rate: 1.6
+
+  M x N, [px x py]       [#iter] {T_p, Gflops} Linf, L2
+># 400 400 [1 1] 	[ 1000] {2.821 1.596} 9.92721e-01 6.03579e-01
+px, py, myrank: 1, 2, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 1, 2, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 1, 2, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 1, 2, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 2, 1, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 2, 1, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 2, 1, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 2, 1, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 1, 4, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 1, 4, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 1, 4, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 1, 4, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 1, 4, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 1, 4, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 1, 4, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 1, 4, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 2, 2, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 2, 2, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 2, 2, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 2, 2, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 2, 2, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 2, 2, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 2, 2, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 2, 2, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 4, 1, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 4, 1, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 4, 1, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 4, 1, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 4, 1, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 4, 1, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 4, 1, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 4, 1, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 1, 8, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 1, 8, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 1, 8, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 1, 8, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 1, 8, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 1, 8, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 1, 8, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 1, 8, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 1, 8, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 1, 8, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 1, 8, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 1, 8, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 1, 8, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 1, 8, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 1, 8, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 1, 8, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 2, 4, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 2, 4, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 2, 4, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 2, 4, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 2, 4, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 2, 4, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 2, 4, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 2, 4, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 2, 4, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 2, 4, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 2, 4, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 2, 4, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 2, 4, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 2, 4, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 2, 4, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 2, 4, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 4, 2, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 4, 2, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 4, 2, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 4, 2, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 4, 2, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 4, 2, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 4, 2, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 4, 2, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 4, 2, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 4, 2, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 4, 2, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 4, 2, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 4, 2, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 4, 2, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 4, 2, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 4, 2, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 8, 1, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 8, 1, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 8, 1, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 8, 1, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 8, 1, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 8, 1, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 8, 1, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 8, 1, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 8, 1, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 8, 1, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 8, 1, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 8, 1, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 8, 1, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 8, 1, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 8, 1, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+px, py, myrank: 8, 1, 0
+
+ *** The number of processes in the geometry > 1, but you have not enabled MPI
+Mon Mar  4 23:29:34 PST 2013
+>>> Job Ends

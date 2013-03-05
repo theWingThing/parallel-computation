@@ -1,0 +1,18 @@
+
+[Simulation begins] Mon Mar  4 23:29:30 2013
+
+dt= 0.0223951, # iters = 1000
+m x n = 400 x 400
+processor geometry: 1 x 1
+
+Compiled with MPI DISabled
+
+[Simulation completes] Mon Mar  4 23:29:33 2013
+
+End at iteration 1000
+Max norm: 9.92721e-01, L2norm: 6.03579e-01
+Running Time: 2.8209 sec.
+{2.8209 1.5961} GFlop rate: 1.6
+
+  M x N, [px x py, NT] [#iter] {T_p, Gflops} Linf, L2
+># 400 400 [1 1] 	[ 1000] {t0 1.596} 9.92721e-01 6.03579e-01
