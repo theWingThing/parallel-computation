@@ -2,6 +2,7 @@
 #include <iostream>
 #include <cstring>
 #include <assert.h>
+#include <stdlib.h>
 
 using namespace std;
 
