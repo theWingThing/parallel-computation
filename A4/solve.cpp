@@ -120,6 +120,17 @@ int solve(ofstream& logfile, double ***_E, double ***_E_prev, double **R, int m,
               E_prev[m+2][i] = E_prev[m][i];
           }
          
+     double above[m], below[m];
+	int Tag = 99;
+	MPI_Status status;
+if(MPI_Comm_rank() > 0){
+	MPI_Send(E_prev[1], n, MPI_DOUBLE, MPI_Comm_rank()-1, Tag, MPI_COMM_WORLD);
+	MPI_IRecv(E_prev[0], n, MPI_DOUBLE, MPI_Comm_rank()-1, Tag, MPI_COMM_WORLD, &status);
+}
+if(MPI_Comm_rank() < MPI_Comm_size - 1){
+	MPI_Send(E_prev[m+1], n, MPI_DOUBLE, MPI_Comm_rank()+1, Tag, MPI_COMM_WORLD);
+	MPI_IRecv(E_prev[m+2], n, MPI_DOUBLE, MPI_Comm_rank()+1, Tag, MPI_COMM_WORLD, &status);
+}
          // Solve for the excitation, a PDE
           for (int j=1; j<=m+1; j++)
           {
