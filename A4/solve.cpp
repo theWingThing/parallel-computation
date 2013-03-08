@@ -16,6 +16,7 @@
 #include "time.h"
 #include "apf.h"
 #include "Plotting.h"
+#include <mph.h>
 using namespace std;
 
 void repNorms(ofstream& logfile, double l2norm, double mx, double dt, int m,int n, int niter, int stats_freq);
