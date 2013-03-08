@@ -73,8 +73,31 @@ int main(int argc, char** argv)
 #ifdef _MPI_
      MPI_Comm_size(MPI_COMM_WORLD,&nprocs);
      MPI_Comm_rank(MPI_COMM_WORLD,&myrank);
-#endif
 
+     if(myrank == 0)
+     {
+         ofstream logfile("Log.txt",ios::out);
+         printTOD(logfile, "Simulation begins");
+
+         // for each process we create array for computation size
+         // n over p by n in 1D except process 0 which has a whole array
+         E = alloc2D(m+3,n+3);
+         E_prev = alloc2D(m+3,n+3);
+         R = alloc2D(m+3,n+3);
+     }
+
+     // now set m and n to be the size of sub array
+     // for each task assigned to a process
+     // m = x axis, n = y axis
+     n = n / nprocs; 
+     
+     if(myrank > 0)
+     {
+         E = alloc2D(m+3,n+3);
+         E_prev = alloc2D(m+3,n+3);
+         R = alloc2D(m+3,n+3);
+     }
+#else
      // The log file
      // Do not change the file name or remove this call
      ofstream logfile("Log.txt",ios::out);
@@ -87,6 +110,7 @@ int main(int argc, char** argv)
      E = alloc2D(m+3,n+3);
      E_prev = alloc2D(m+3,n+3);
      R = alloc2D(m+3,n+3);
+#endif
 
      // To initialize the meshes, a process needs to know the coordinates of
      // the local  partition with respect to the global coordinate system
@@ -109,15 +133,45 @@ int main(int argc, char** argv)
      int m0 = 0, n0 = 0;
      int m_global=m, n_global=n;
 
+#ifdef _MPI_
+     // set n_global to global size
+     n_global = m;
+
+     // in 1D we set m to n in n by n global array 
+     if(myrank > 0)
+     { 
+         // m0 = 0 for all process
+         n0 += m / nprocs;
+     }
+#endif
      init(E,E_prev,R,m0,n0,m,n,m_global,n_global);
+
      //
      // Initialize two simulation parameters: timestep and alpha
      // Do not remove this call or the code will not run correctly
      //
 
+
+#ifdef _MPI_
+     double alpha;
+     // n is currently set to be m/p
+     double dt = ComputeDt(m,alpha);
+     // Report various information
+     // Do not remove this call, it is needed for grading
+     if(myrank == 0)
+     {
+         ReportStart(logfile, dt, niters, m, m, px, py, noComm);
+
+         Plotter *plotter = NULL;
+         if (plot_freq)
+         {
+             plotter = new Plotter();
+             assert(plotter);
+         }
+     }
+#else
      double alpha;
      double dt = ComputeDt(n,alpha);
-
      // Report various information
      // Do not remove this call, it is needed for grading
      ReportStart(logfile, dt, niters, m, n, px, py, noComm);
@@ -128,44 +182,65 @@ int main(int argc, char** argv)
          plotter = new Plotter();
          assert(plotter);
      }
-
+#endif
      // Start the timer
 #ifdef _MPI_
-     double t0 = -MPI_Wtime();
+     MPI_Barrier(MPI_COMM_WORLD);
+     double local_t1 = -MPI_Wtime();
+     double t0;
 #else
      double t0 = -getTime();
 #endif
      int niter = solve(logfile, &E, &E_prev, R, m, n, niters, alpha, dt, plot_freq, plotter, stats_freq);
 
 #ifdef _MPI_
-     t0 += MPI_Wtime();
+     // find the max from each process
+     local_t1 += MPI_Wtime();
+
+     MPI_Reduce(&local_t1, &t0, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 #else
      t0 += getTime();
 #endif
 
-    if (niter != niters)
-       cout << "*** niters should be equal to niters" << endl;
-     // Report various information
-     // Do not remove this call, it is needed for grading
-     double mx;
-     double l2norm = stats(E_prev,m,n,&mx);
-
-     ReportEnd(logfile,niters,l2norm,mx,m,n,t0,px, py);
-
-     if (plot_freq)
+#ifdef _MPI_
+     if(myrank == 0)
      {
-        cout << "\n\nEnter any input to close the program and the plot...";
-        int resp;
-        cin >> resp;
-      }
+#endif
+        if (niter != niters)
+           cout << "*** niters should be equal to niters" << endl;
+         // Report various information
+         // Do not remove this call, it is needed for grading
+         double mx;
+         double l2norm = stats(E_prev,m,n,&mx);
 
-     logfile.close();
+         ReportEnd(logfile,niters,l2norm,mx,m,n,t0,px, py);
+
+         if (plot_freq)
+         {
+            cout << "\n\nEnter any input to close the program and the plot...";
+            int resp;
+            cin >> resp;
+          }
+
+         logfile.close();
+
+#ifdef _MPI_
+     }
+#endif
+
      free (E);
      free (E_prev);
      free (R);
-     if (plot_freq)
-         delete plotter;
+
 #ifdef _MPI_
+     if(myrank == 0)
+     {
+#endif
+         if (plot_freq)
+             delete plotter;
+#ifdef _MPI_
+     }
+
      MPI_Finalize();
 #endif
 }
