@@ -190,10 +190,18 @@ int main(int argc, char** argv)
      double t0;
 #else
      double t0 = -getTime();
-#endif
      int niter = solve(logfile, &E, &E_prev, R, m, n, niters, alpha, dt, plot_freq, plotter, stats_freq);
+#endif
 
 #ifdef _MPI_
+     if(myrank == 0) 
+     { 
+         int niter = solve(logfile, &E, &E_prev, R, m, n, niters, alpha, dt, plot_freq, plotter, stats_freq);
+     }
+     else
+     {
+         int niter = solve(NULL, &E, &E_prev, R, m, n, niters, alpha, dt, plot_freq, NULL, stats_freq);
+     }
      // find the max from each process
      local_t1 += MPI_Wtime();
 

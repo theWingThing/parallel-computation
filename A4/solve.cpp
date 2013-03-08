@@ -13,6 +13,7 @@
 #include <iomanip>
 #include <string>
 #include <math.h>
+#include <mpi.h>
 #include "time.h"
 #include "apf.h"
 #include "Plotting.h"
