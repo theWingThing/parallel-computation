@@ -76,16 +76,18 @@ int main(int argc, char** argv)
      MPI_Comm_rank(MPI_COMM_WORLD,&myrank);
 
      ofstream logfile("Log.txt",ios::out);
+     printTOD(logfile, "Simulation begins");
 
      if(myrank == 0)
      {
-         printTOD(logfile, "Simulation begins");
 
          // for each process we create array for computation size
          // n over p by n in 1D except process 0 which has a whole array
          E = alloc2D(m+3,n+3);
          E_prev = alloc2D(m+3,n+3);
          R = alloc2D(m+3,n+3);
+
+		 //cout << "alloc array to " << myrank << endl;
      }
 
      // now set m and n to be the size of sub array
@@ -98,6 +100,7 @@ int main(int argc, char** argv)
          E = alloc2D(m+3,n+3);
          E_prev = alloc2D(m+3,n+3);
          R = alloc2D(m+3,n+3);
+		 cout << "alloc array to " << myrank << endl;
      }
 #else
      // The log file
@@ -161,11 +164,15 @@ int main(int argc, char** argv)
 
      // Report various information
      // Do not remove this call, it is needed for grading
+	 
+
      Plotter *plotter = NULL;
+	 //cout << "rank zero still alive 1 " << myrank << endl;
+     ReportStart(logfile, dt, niters, m, m, px, py, noComm);
+	 //cout << "rank zero still alive 2" << myrank << endl;
+
      if(myrank == 0)
      {
-         ReportStart(logfile, dt, niters, m, m, px, py, noComm);
-
          if (plot_freq)
          {
              plotter = new Plotter();
@@ -177,7 +184,9 @@ int main(int argc, char** argv)
      double dt = ComputeDt(n,alpha);
      // Report various information
      // Do not remove this call, it is needed for grading
+	 //cout << "report stats..." << endl;
      ReportStart(logfile, dt, niters, m, n, px, py, noComm);
+	 //cout << "report returned.." << endl;
 
      Plotter *plotter = NULL;
      if (plot_freq)
@@ -188,7 +197,9 @@ int main(int argc, char** argv)
 #endif
      // Start the timer
 #ifdef _MPI_
+     //cout << "barrier #1 start" << endl;
      MPI_Barrier(MPI_COMM_WORLD);
+     //cout << "barrier #1 end" << endl;
      double local_t1 = -MPI_Wtime();
      double t0;
 #else
@@ -197,7 +208,10 @@ int main(int argc, char** argv)
 #endif
 
 #ifdef _MPI_
+     //cout << "solve #1 start" << endl;
+     //cout << "myrank: "<< myrank << endl;
     int niter = solve(logfile, &E, &E_prev, R, m, n, niters, alpha, dt, plot_freq, plotter, stats_freq);
+     //cout << "solve #1 end" << endl;
      
      // find the max from each process
      local_t1 += MPI_Wtime();
@@ -207,11 +221,6 @@ int main(int argc, char** argv)
      t0 += getTime();
 #endif
 
-#ifdef _MPI_
-
-     if(myrank == 0)
-     {
-#endif
         if (niter != niters)
            cout << "*** niters should be equal to niters" << endl;
          // Report various information
@@ -221,18 +230,18 @@ int main(int argc, char** argv)
 
          ReportEnd(logfile,niters,l2norm,mx,m,n,t0,px, py);
 
+#ifdef _MPI_
+     if(myrank == 0)
+     {
          if (plot_freq)
          {
             cout << "\n\nEnter any input to close the program and the plot...";
             int resp;
             cin >> resp;
           }
-
-         logfile.close();
-
-#ifdef _MPI_
     }
 #endif
+         logfile.close();
 
      free (E);
      free (E_prev);

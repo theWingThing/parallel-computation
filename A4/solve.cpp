@@ -12,12 +12,11 @@
 #include <fstream>
 #include <iomanip>
 #include <string>
-#include <math.h>
 #include <mpi.h>
+#include <math.h>
 #include "time.h"
 #include "apf.h"
 #include "Plotting.h"
-//#include <mph.h>
 using namespace std;
 
 void repNorms(ofstream& logfile, double l2norm, double mx, double dt, int m,int n, int niter, int stats_freq);
@@ -61,7 +60,22 @@ void repNorms(ofstream& logfile, double l2norm, double mx, double dt, int m,int 
      *_mx = mx;
      return l2norm;
  }
-
+void communicate_top(double *data_to_send, double *recv_buf, int n, int myrank)
+{
+	  MPI_Status status;
+      MPI_Request request;
+	  MPI_Irecv(recv_buf, n, MPI_DOUBLE, myrank - 1, 123, MPI_COMM_WORLD, &request);
+	  MPI_Send(data_to_send, n, MPI_DOUBLE, myrank - 1, 123, MPI_COMM_WORLD);
+      MPI_Wait(&request, &status);
+}
+void communicate_bottom(double *data_to_send, double *recv_buf, int n, int myrank)
+{
+	  MPI_Status status;
+      MPI_Request request;
+	  MPI_Irecv(recv_buf, n, MPI_DOUBLE, myrank + 1, 123, MPI_COMM_WORLD, &request);
+	  MPI_Send(data_to_send, n, MPI_DOUBLE, myrank + 1, 123, MPI_COMM_WORLD);
+      MPI_Wait(&request, &status);
+}
 int solve(ofstream& logfile, double ***_E, double ***_E_prev, double **R, int m, int n, 
     int niters, double alpha, double dt, int plot_freq, Plotter *plotter, int stats_freq)
 {
@@ -122,17 +136,39 @@ int solve(ofstream& logfile, double ***_E, double ***_E_prev, double **R, int m,
               E_prev[m+2][i] = E_prev[m][i];
           }
          
-     double above[m], below[m];
-	int Tag = 99;
-	MPI_Status status;
-if(MPI_Comm_rank() > 0){
-	MPI_Send(E_prev[1], n, MPI_DOUBLE, MPI_Comm_rank()-1, Tag, MPI_COMM_WORLD);
-	MPI_IRecv(E_prev[0], n, MPI_DOUBLE, MPI_Comm_rank()-1, Tag, MPI_COMM_WORLD, &status);
-}
-if(MPI_Comm_rank() < MPI_Comm_size - 1){
-	MPI_Send(E_prev[m+1], n, MPI_DOUBLE, MPI_Comm_rank()+1, Tag, MPI_COMM_WORLD);
-	MPI_IRecv(E_prev[m+2], n, MPI_DOUBLE, MPI_Comm_rank()+1, Tag, MPI_COMM_WORLD, &status);
-}
+          int myrank = 0, nprocs = 0;
+          MPI_Comm_rank(MPI_COMM_WORLD,&myrank);
+          MPI_Comm_size(MPI_COMM_WORLD,&nprocs);
+          double** list_of_arrays[] = {E, E_prev, R};
+          double** curr_array;
+
+		  //cout << "rank: "<< myrank <<endl;
+		  //cout << "num process: "<< nprocs <<endl;
+
+          if(nprocs > 1) 
+          {
+              for(int i = 0; i < 3; i++)
+              {
+                  curr_array = list_of_arrays[i];
+
+                  if(0 == myrank)
+                  {                     // send buffer  , receive buffer, size, rank
+                      communicate_bottom(curr_array[n+1], curr_array[n+2], m, myrank);
+                  }
+                  else if (nprocs - 1 == myrank)
+                  {
+                      communicate_top(curr_array[1], curr_array[0], m, myrank);
+                  }
+                  else
+                  {
+                      communicate_top(curr_array[1], curr_array[0], m, myrank);
+                      communicate_bottom(curr_array[n+1], curr_array[n+2], m, myrank);
+                  }
+                  MPI_Barrier(MPI_COMM_WORLD);
+              }
+
+          }
+
          // Solve for the excitation, a PDE
           for (int j=1; j<=m+1; j++)
           {
@@ -146,8 +182,7 @@ if(MPI_Comm_rank() < MPI_Comm_size - 1){
           }
 
          /* 
-          * Solve the ODE, advancing excitation and recovery variables
-          *     to the next timtestep
+          * Solve the ODE, advancing excitation and recovery variables to the next timtestep
           */
          for (int j=1; j<=m+1; j++)
          {
@@ -173,21 +208,45 @@ if(MPI_Comm_rank() < MPI_Comm_size - 1){
              }
          }
 
-         if (stats_freq)
-         {
-             double mx;
-             double l2norm = stats(E_prev,m,n,&mx);
-             repNorms(logfile,l2norm,mx,dt,m,n,niter, stats_freq);
-         }
 
-         if (plot_freq)
-         {
-             if (!(niter % plot_freq))
-             {
-               //splot(E,niter,m+1,n+1,WAIT); 
-               plotter->updatePlot(E,  niter, m+1, n+1, WAIT);
-             }
-          }
+		if(0 == myrank)
+		{
+            MPI_Status status;
+			int size = MPI_Comm_size(MPI_COMM_WORLD, &size);
+			for(int src = 0; src < size; src++) 
+			{
+				for(int y = 0; y < m + 1; y++)
+				{
+					MPI_Recv(E[y], n + 2, MPI_DOUBLE, src, y, MPI_COMM_WORLD, &status);
+					for(int i = 0; i < n + 1; i++)
+					{
+						cout << "Debug E[" << y <<"][" << i << "] = " << E[y][i];
+					}
+				}
+			}
+			if (stats_freq)
+			{
+			    double mx;
+			    double l2norm = stats(E_prev,m,n,&mx);
+			    repNorms(logfile,l2norm,mx,dt,m,n,niter, stats_freq);
+			}
+
+			if (plot_freq)
+			{
+			    if (!(niter % plot_freq))
+			    {
+			      //splot(E,niter,m+1,n+1,WAIT); 
+			      plotter->updatePlot(E,  niter, m+1, n+1, WAIT);
+			    }
+			}
+		}
+		else 
+		{
+			for(int i = 0; i < m + 1; i++)
+			{
+				MPI_Send(E[i], n + 2, MPI_DOUBLE, 0, i, MPI_COMM_WORLD);
+			}
+		}
 
          // Swap current and previous
          double **tmp = E; E = E_prev; E_prev = tmp;
