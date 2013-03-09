@@ -13,11 +13,11 @@
 #include <iomanip>
 #include <string>
 #include <math.h>
-#include <mpi.h>
+//#include <mpi.h>
 #include "time.h"
 #include "apf.h"
 #include "Plotting.h"
-#include <mph.h>
+//#include <mph.h>
 using namespace std;
 
 void repNorms(ofstream& logfile, double l2norm, double mx, double dt, int m,int n, int niter, int stats_freq);
@@ -123,6 +123,7 @@ int solve(ofstream& logfile, double ***_E, double ***_E_prev, double **R, int m,
           }
          
      double above[m], below[m];
+/*
 	int Tag = 99;
 	MPI_Status status;
 if(MPI_Comm_rank() > 0){
@@ -133,6 +134,7 @@ if(MPI_Comm_rank() < MPI_Comm_size - 1){
 	MPI_Send(E_prev[m+1], n, MPI_DOUBLE, MPI_Comm_rank()+1, Tag, MPI_COMM_WORLD);
 	MPI_IRecv(E_prev[m+2], n, MPI_DOUBLE, MPI_Comm_rank()+1, Tag, MPI_COMM_WORLD, &status);
 }
+*/
          // Solve for the excitation, a PDE
           for (int j=1; j<=m+1; j++)
           {

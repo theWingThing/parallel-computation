@@ -56,6 +56,7 @@ int main(int argc, char** argv)
 
 #ifdef _MPI_
      MPI_Init(&argc,&argv);
+
 #endif
 
     // Parse command line arguments
@@ -69,14 +70,15 @@ int main(int argc, char** argv)
 
      m = n;
 
-     int nprocs=1, myrank=0;
 #ifdef _MPI_
+     int nprocs=1, myrank=0;
      MPI_Comm_size(MPI_COMM_WORLD,&nprocs);
      MPI_Comm_rank(MPI_COMM_WORLD,&myrank);
 
+     ofstream logfile("Log.txt",ios::out);
+
      if(myrank == 0)
      {
-         ofstream logfile("Log.txt",ios::out);
          printTOD(logfile, "Simulation begins");
 
          // for each process we create array for computation size
@@ -156,13 +158,14 @@ int main(int argc, char** argv)
      double alpha;
      // n is currently set to be m/p
      double dt = ComputeDt(m,alpha);
+
      // Report various information
      // Do not remove this call, it is needed for grading
+     Plotter *plotter = NULL;
      if(myrank == 0)
      {
          ReportStart(logfile, dt, niters, m, m, px, py, noComm);
 
-         Plotter *plotter = NULL;
          if (plot_freq)
          {
              plotter = new Plotter();
@@ -194,14 +197,8 @@ int main(int argc, char** argv)
 #endif
 
 #ifdef _MPI_
-     if(myrank == 0) 
-     { 
-         int niter = solve(logfile, &E, &E_prev, R, m, n, niters, alpha, dt, plot_freq, plotter, stats_freq);
-     }
-     else
-     {
-         int niter = solve(NULL, &E, &E_prev, R, m, n, niters, alpha, dt, plot_freq, NULL, stats_freq);
-     }
+    int niter = solve(logfile, &E, &E_prev, R, m, n, niters, alpha, dt, plot_freq, plotter, stats_freq);
+     
      // find the max from each process
      local_t1 += MPI_Wtime();
 
@@ -211,6 +208,7 @@ int main(int argc, char** argv)
 #endif
 
 #ifdef _MPI_
+
      if(myrank == 0)
      {
 #endif
@@ -233,7 +231,7 @@ int main(int argc, char** argv)
          logfile.close();
 
 #ifdef _MPI_
-     }
+    }
 #endif
 
      free (E);
