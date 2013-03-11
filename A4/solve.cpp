@@ -227,7 +227,7 @@ int solve(ofstream& logfile, double ***_E, double ***_E_prev, double **R, int m,
 //            cout << "size = " << size << endl;
 			for(int src = 1; src < size; src++) 
 			{
-                if(myrank == nprocs-1)
+                if(src  == nprocs-1)
                 {
                     remainder = n % nprocs;
                 }
