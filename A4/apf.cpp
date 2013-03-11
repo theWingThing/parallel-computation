@@ -72,36 +72,37 @@ int main(int argc, char** argv)
 
 #ifdef _MPI_
      int nprocs=1, myrank=0;
+     int local_n = n, local_m = m; 
+         
      MPI_Comm_size(MPI_COMM_WORLD,&nprocs);
      MPI_Comm_rank(MPI_COMM_WORLD,&myrank);
+
+     if(myrank > 0)
+     {
+         // fix for x-axis for now
+         local_m /= nprocs;
+
+         if(myrank == nprocs -1) 
+         {
+             local_m += (m % nprocs); 
+         }
+     }
 
      ofstream logfile("Log.txt",ios::out);
      printTOD(logfile, "Simulation begins");
 
-     if(myrank == 0)
-     {
+     // for each process we create array for computation size
+     // n over p by n in 1D except process 0 which has a whole array
+     E = alloc2D(local_m+3,local_n+3);
+     E_prev = alloc2D(local_m+3,local_n+3);
+     R = alloc2D(local_m+3,local_n+3);
 
-         // for each process we create array for computation size
-         // n over p by n in 1D except process 0 which has a whole array
-         E = alloc2D(m+3,n+3);
-         E_prev = alloc2D(m+3,n+3);
-         R = alloc2D(m+3,n+3);
-
-		 //cout << "alloc array to " << myrank << endl;
-     }
+	 //cout << "alloc array to " << myrank << endl;
 
      // now set m and n to be the size of sub array
      // for each task assigned to a process
      // m = x axis, n = y axis
-     n = n / nprocs; 
      
-     if(myrank > 0)
-     {
-         E = alloc2D(m+3,n+3);
-         E_prev = alloc2D(m+3,n+3);
-         R = alloc2D(m+3,n+3);
-		 cout << "alloc array to " << myrank << endl;
-     }
 #else
      // The log file
      // Do not change the file name or remove this call
@@ -136,42 +137,74 @@ int main(int argc, char** argv)
      // the global coordinate
      
      int m0 = 0, n0 = 0;
-     int m_global=m, n_global=n;
 
+     int m_global=m, n_global=n;
 #ifdef _MPI_
-     // set n_global to global size
-     n_global = m;
 
      // in 1D we set m to n in n by n global array 
-     if(myrank > 0)
-     { 
-         // m0 = 0 for all process
-         n0 += m / nprocs;
-     }
+     // m0 = 0 for all process
+     // m is x-axis
+     m0 = (n/nprocs) * myrank;
 #endif
-     init(E,E_prev,R,m0,n0,m,n,m_global,n_global);
+    if(myrank == 0)
+    {
+        init(E, E_prev,R, m0, n0, m, n, m_global, n_global);
+#if 0
+         cout << "rank--->"<<myrank<<endl;
+         for(int i = 0; i < local_m + 3; i++)
+         {
+             cout << i << ", ";
+         }
+         cout << endl;
 
+         for(int i = 0; i < m + 3; i++)
+         {
+             cout << "row: " << i << endl;
+             for(int j = 0; j < n +3; j++)
+             {
+                 cout << R[i][j] <<", ";
+             }
+             cout <<endl;
+         }
+#endif
+    }
+
+
+    if(myrank > 0)
+    {
+         init(E, E_prev, R, m0, n0, local_m, local_n, m_global,n_global);
+#if 0
+         cout << "rank--->"<<myrank<<endl;
+         for(int i = 0; i < local_m + 3; i++)
+         {
+             cout << i << ", ";
+         }
+         cout << endl;
+
+         for(int i = 0; i < local_m + 3; i++)
+         {
+             cout << "row: " << i << endl;
+             for(int j = 0; j < local_n +3; j++)
+             {
+                 cout << R[i][j] <<", ";
+             }
+             cout <<endl;
+         }
+#endif
+    }
      //
      // Initialize two simulation parameters: timestep and alpha
      // Do not remove this call or the code will not run correctly
      //
-
-
-#ifdef _MPI_
      double alpha;
-     // n is currently set to be m/p
-     double dt = ComputeDt(m,alpha);
-
+     double dt = ComputeDt(n,alpha);
      // Report various information
      // Do not remove this call, it is needed for grading
-	 
+     ReportStart(logfile, dt, niters, m, n, px, py, noComm);
 
      Plotter *plotter = NULL;
-	 //cout << "rank zero still alive 1 " << myrank << endl;
-     ReportStart(logfile, dt, niters, m, m, px, py, noComm);
-	 //cout << "rank zero still alive 2" << myrank << endl;
 
-     if(myrank == 0)
+     if(myrank==0)
      {
          if (plot_freq)
          {
@@ -179,22 +212,6 @@ int main(int argc, char** argv)
              assert(plotter);
          }
      }
-#else
-     double alpha;
-     double dt = ComputeDt(n,alpha);
-     // Report various information
-     // Do not remove this call, it is needed for grading
-	 //cout << "report stats..." << endl;
-     ReportStart(logfile, dt, niters, m, n, px, py, noComm);
-	 //cout << "report returned.." << endl;
-
-     Plotter *plotter = NULL;
-     if (plot_freq)
-     {
-         plotter = new Plotter();
-         assert(plotter);
-     }
-#endif
      // Start the timer
 #ifdef _MPI_
      //cout << "barrier #1 start" << endl;
@@ -210,8 +227,8 @@ int main(int argc, char** argv)
 #ifdef _MPI_
      //cout << "solve #1 start" << endl;
      //cout << "myrank: "<< myrank << endl;
+     //cout << "m: "<< m << " n: " << n << endl;
     int niter = solve(logfile, &E, &E_prev, R, m, n, niters, alpha, dt, plot_freq, plotter, stats_freq);
-     //cout << "solve #1 end" << endl;
      
      // find the max from each process
      local_t1 += MPI_Wtime();
@@ -221,14 +238,22 @@ int main(int argc, char** argv)
      t0 += getTime();
 #endif
 
-        if (niter != niters)
-           cout << "*** niters should be equal to niters" << endl;
-         // Report various information
-         // Do not remove this call, it is needed for grading
-         double mx;
-         double l2norm = stats(E_prev,m,n,&mx);
+     if (niter != niters)
+        cout << "*** niters should be equal to niters" << endl;
+      // Report various information
+      // Do not remove this call, it is needed for grading
+      double mx;
+      double l2norm = 0; 
 
-         ReportEnd(logfile,niters,l2norm,mx,m,n,t0,px, py);
+      if(myrank == 0)
+      {
+          l2norm = stats(E_prev,m,n,&mx);
+          ReportEnd(logfile,niters,l2norm,mx, m,n,t0,px, py);
+      }
+      else 
+      { 
+          ReportEnd(logfile,niters,l2norm,mx,local_m,local_n,t0,px, py);
+      }
 
 #ifdef _MPI_
      if(myrank == 0)
@@ -241,7 +266,7 @@ int main(int argc, char** argv)
           }
     }
 #endif
-         logfile.close();
+     logfile.close();
 
      free (E);
      free (E_prev);

@@ -27,14 +27,21 @@ void init (double **E,double **E_prev,double **R, int m0, int n0, int m,int n, i
         for (i=1; i<= n+1; i++){
             E_prev[j][i] = R[j][i] = 0;
     }
+
     for (j=1; j<=m + 1; j++)
+    {
         for (i=n/2+2; i<= n+1 ; i++){
             int i1 = i + n0;
             if (i1 >= n_global/2+1)
+            {
                 E_prev[j][i] = 1.0;
+            }
+
+        }
+
     }
 
-    for (j=m/2+2; j<=m+1; j++){
+    for (j=1; j<=m+1; j++){
         int j1 = j+m0 ;
         if (j1 >=m_global/2+1)
         for (i=1; i<=n+1; i++)
